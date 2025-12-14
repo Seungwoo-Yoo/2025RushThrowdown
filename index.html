@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 GirlCrush Final Leader Board - Elite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background-color: #111827; color: #d1d5db; }
+        .tab { transition: all 0.2s ease-in-out; }
+        .tab.active { color: #facc15; border-color: #facc15; }
+        .loader { border: 4px solid #4b5563; border-top: 4px solid #facc15; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .details-row.hidden, #wod-content.hidden { display: none; }
+        /* 💡 하이라이트 클래스: Emerald 500 (#10b981) 배경, 굵게(700) 처리 */
+        .highlight {
+            background-color: #10b981 !important; /* Emerald 500 */
+            color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-yellow-300 mb-2">2025 GirlCrush Final Leader Board</h1>
+            <h2 class="text-xl sm:text-2xl font-semibold text-white mb-4">ELITE DIVISION</h2>
+            <p class="text-md sm:text-lg text-gray-400">
+                본선 대회 실시간 순위 정보 (최종 순위는 심판 판정에 따라 달라질 수 있습니다.)
+            </p>
+        </header>
+
+        <div class="border-b border-gray-700 mb-4">
+            <nav class="-mb-px flex flex-wrap justify-center space-x-2 sm:space-x-4" aria-label="Tabs">
+                <button data-tab="event1" class="tab active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 1</button>
+                <button data-tab="event2" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 2</button>
+                <button data-tab="event3" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 3</button>
+                <button data-tab="event4" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 4</button>
+                <button data-tab="timetable" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">TIMETABLE</button>
+                <button data-tab="total" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">TOTAL</button>
+            </nav>
+        </div>
+
+        <div id="division-tabs" class="flex justify-center items-center gap-4 mb-6 hidden">
+             <button data-division="Elite" class="tab active bg-gray-700/50 text-white font-bold py-2 px-4 rounded-full text-xs sm:text-sm">Elite Division</button>
+        </div>
+
+        <div id="wod-section" class="my-6 text-center">
+            <button id="wod-toggle-button" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors duration-200">
+                WOD DETAILS
+            </button>
+            <div id="wod-content" class="hidden mt-4 p-4 bg-gray-800 rounded-lg text-left whitespace-pre-wrap max-w-2xl mx-auto">
+            </div>
+        </div>
+
+        <div id="status" class="h-8 flex items-center justify-center text-sm text-gray-400 mb-4"></div>
+        <div id="tableContainer" class="overflow-x-auto"></div>
+    </div>
+
+    <script>
+        // --- ⚠️ 주최자 설정 부분 ⚠️ ---
+        // 💡 여기에 유효한 API 키를 넣어주세요! (기존 키 사용 확인)
+        const API_KEY = '여기에_API_키를_붙여넣으세요'; 
+        // 💡 스프레드시트 ID는 제공해주신 주소로 설정되었습니다.
+        const SPREADSHEET_ID = '1rXpKUIl2ioWWeMwtlmj-CR_6LoHYQuuP7k7GDRgd3WQ'; 
+
+        // Elite 디비전과 모든 이벤트 탭에 해당하는 시트 정보 설정
+        const SHEET_DATA_MAP = {
+            // EVENT 1: 일반 테이블 (A3:C6)
+            event1: {
+                Elite: { range: "'결과지'!A3:C6", type: 'standard', wodRange: "'결과지'!A100" },
+            },
+            // EVENT 2: 확장 가능 테이블 (F3:L26, 총 7열, 노출 3열)
+            event2: {
+                Elite: { range: "'결과지'!F3:L26", type: 'expandable', visibleCols: 3, wodRange: "'결과지'!B100" },
+            },
+            // EVENT 3: 확장 가능 테이블 (N3:W16, 총 10열, 노출 3열)
+            event3: {
+                Elite: { range: "'결과지'!N3:W16", type: 'expandable', visibleCols: 3, wodRange: "'결과지'!C100" },
+            },
+            // EVENT 4: 확장 가능 테이블 (N21:W26, 총 10열, 노출 3열)
+            event4: {
+                Elite: { range: "'결과지'!N21:W26", type: 'expandable', visibleCols: 3, wodRange: "'결과지'!D100" },
+            },
+            // Timetable: 범위 수정 ('timetable' 시트 사용)
+            timetable: {
+                Elite: { 
+                    range: "'timetable'!A1:F25", 
+                    type: 'timetable', 
+                    wodRange: null,
+                    highlightRange: "'timetable'!G1" 
+                },
+            },
+            // TOTAL RANK: 확장 가능 테이블 (A40:G43, 총 7열, 노출 3열)
+            total: {
+                Elite: { 
+                    range: "'결과지'!A40:G43", // 전체 범위 (7열)
+                    type: 'expandable', 
+                    visibleCols: 3, // 노출되는 열 수 (Rank, TeamName, Score)
+                    hideSwitchRange: "'Settings'!B1" 
+                },
+            },
+        };
+        // ------------------------------------
+
+        const tableContainer = document.getElementById('tableContainer');
+        const statusDiv = document.getElementById('status');
+        const divisionTabsContainer = document.getElementById('division-tabs');
+        const wodSection = document.getElementById('wod-section');
+        const wodToggleButton = document.getElementById('wod-toggle-button');
+        const wodContent = document.getElementById('wod-content');
+        const REFRESH_INTERVAL = 15000;
+
+        let currentEvent = 'event1'; // 기본 탭을 'event1'로 설정
+        let currentDivision = 'Elite'; // Division을 'Elite'로 고정
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!API_KEY || API_KEY === '여기에_API_키를_붙여넣으세요' || !SPREADSHEET_ID || SPREADSHEET_ID === '여기에_스프레드시트_ID를_붙여넣으세요') {
+                displayError('⚠️ 주최자 확인 필요: HTML 파일 내에 API 키와 스프레드시트 ID를 설정해주세요.');
+                return;
+            }
+            
+            initializeTabs();
+            fetchAndDisplayData();
+            setInterval(fetchAndDisplayData, REFRESH_INTERVAL);
+        });
+
+        function initializeTabs() {
+            const mainTabs = document.querySelectorAll('button[data-tab]');
+
+            mainTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentEvent = tab.dataset.tab;
+                    
+                    // Timetable/Total 탭이 선택되면 WOD 섹션을 숨깁니다.
+                    if (currentEvent === 'timetable' || currentEvent === 'total') {
+                        wodSection.style.display = 'none';
+                    } else {
+                        wodSection.style.display = 'block';
+                    }
+
+                    wodContent.classList.add('hidden'); 
+                    updateActiveTabs(mainTabs, tab);
+                    fetchAndDisplayData();
+                });
+            });
+            // WOD 토글 버튼 리스너는 유지
+            wodToggleButton.addEventListener('click', () => {
+                wodContent.classList.toggle('hidden');
+            });
+            
+            // 초기 로드 시 WOD 섹션 상태 설정 (default: event1)
+            wodSection.style.display = 'block';
+        }
+
+        function updateActiveTabs(tabs, activeTab, isDivision = false) {
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (isDivision) {
+                    tab.classList.remove('bg-gray-700/50', 'text-white');
+                    tab.classList.add('bg-gray-800', 'text-gray-300');
+                }
+            });
+            activeTab.classList.add('active');
+            if (isDivision) {
+                activeTab.classList.add('bg-gray-700/50', 'text-white');
+                activeTab.classList.remove('bg-gray-800', 'text-gray-300');
+            }
+        }
+
+        async function fetchAndDisplayData() {
+            showLoading();
+            // currentDivision이 'Elite'로 고정되어 있음
+            const config = SHEET_DATA_MAP[currentEvent] ? SHEET_DATA_MAP[currentEvent][currentDivision] : null; 
+            
+            if (!config || !config.range) {
+                if (currentEvent !== 'timetable' && currentEvent !== 'total') {
+                    displayError('설정 오류: 현재 탭의 시트 정보가 없습니다. SHEET_DATA_MAP을 확인하세요.');
+                }
+            }
+            
+            // Total 탭 숨김 처리 로직 유지
+            if (currentEvent === 'total' && config.hideSwitchRange) {
+                try {
+                    const hideSwitchResult = await fetchData(config.hideSwitchRange);
+                    if (hideSwitchResult && hideSwitchResult[0] && hideSwitchResult[0][0] && hideSwitchResult[0][0].toLowerCase() === 'o') {
+                        displayAnnouncement("시상식때 공개 됩니다!");
+                        return; 
+                    }
+                } catch (error) {
+                    console.error('숨김 스위치 확인 오류:', error);
+                }
+            }
+            
+            const leaderboardPromise = fetchData(config.range);
+            const wodPromise = (currentEvent !== 'timetable' && currentEvent !== 'total' && config.wodRange) ? fetchData(config.wodRange) : Promise.resolve(null);
+            
+            // 💡 Timetable 탭일 경우 하이라이트 범위 데이터도 함께 가져옵니다.
+            const highlightPromise = (currentEvent === 'timetable' && config.highlightRange) ? fetchData(config.highlightRange) : Promise.resolve(null);
+
+
+            try {
+                const [leaderboardResult, wodResult, highlightResult] = await Promise.all([leaderboardPromise, wodPromise, highlightPromise]);
+
+                if (leaderboardResult) {
+                    // 💡 Timetable의 경우 하이라이트 결과를 함께 전달합니다.
+                    if (currentEvent === 'timetable') {
+                        let highlightRowNumber = null;
+                        if (highlightResult && highlightResult[0] && highlightResult[0][0]) {
+                            // 시트에서 가져온 값을 정수로 변환합니다.
+                            highlightRowNumber = parseInt(highlightResult[0][0].trim()); 
+                            if (isNaN(highlightRowNumber)) highlightRowNumber = null;
+                        }
+                        renderTimetable(leaderboardResult, highlightRowNumber);
+                    } else {
+                        renderTable(leaderboardResult, config);
+                    }
+                    
+                } else {
+                    displayError('선택된 탭에 데이터가 없습니다. 시트 이름과 범위를 확인해주세요.');
+                }
+                
+                // WOD 섹션 처리 (Timetable/Total 제외)
+                if (currentEvent !== 'timetable' && currentEvent !== 'total') {
+                    if (wodResult && wodResult.length > 0 && wodResult[0][0]) {
+                        wodSection.style.display = 'block';
+                        wodContent.textContent = wodResult[0][0];
+                    } else {
+                        // 데이터는 있지만 WOD 설명이 없는 경우
+                        wodSection.style.display = 'block';
+                    }
+                }
+
+                updateStatus(`마지막 업데이트: ${new Date().toLocaleTimeString()}`);
+
+            } catch(error) {
+                console.error('Fetching error:', error);
+                displayError(`데이터 로딩 오류: ${error.message}`);
+            }
+        }
+        
+        async function fetchData(range) {
+            const encodedRange = encodeURIComponent(range);
+            const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodedRange}?key=${API_KEY}`;
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            if (!response.ok) {
+                const errorMessage = data.error?.message || `HTTP error! status: ${response.status}`;
+                throw new Error(errorMessage);
+            }
+            return data.values || null;
+        }
+
+
+        function renderTable(data, config) {
+            if (config.type === 'expandable') {
+                renderExpandableTable(data, config.visibleCols);
+            } else if (config.type === 'timetable') {
+                // highlightRowIndex는 fetchAndDisplayData에서 전달되므로 여기서 처리하지 않습니다.
+                renderTimetable(data, null); 
+            } else {
+                renderStandardTable(data);
+            }
+        }
+        
+        // 💡 highlightRowNumber 인수를 추가했습니다. (시트 행 번호, 1부터 시작)
+        function renderTimetable(data, highlightRowNumber) {
+            tableContainer.innerHTML = '';
+            const table = document.createElement('table');
+            table.className = "min-w-full divide-y divide-gray-700 table-fixed";
+            
+            const thead = document.createElement('thead');
+            thead.className = "bg-gray-800";
+            const headerRow = document.createElement('tr');
+            
+            if (!data || data.length === 0 || data[0].length === 0) {
+                displayError('시간표 데이터가 비어있습니다. 시트 범위를 확인하세요.');
+                return;
+            }
+            data[0].forEach(headerText => {
+                const th = document.createElement('th');
+                th.scope = "col";
+                th.className = "py-3.5 px-2 text-center text-sm font-semibold text-white";
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            const tbody = document.createElement('tbody');
+            tbody.className = "divide-y divide-gray-800";
+            // 💡 헤더(data[0])를 제외한 데이터 행을 순회합니다. 
+            // 데이터 배열 인덱스 i는 시트의 행 번호와 일치합니다. (data[1] = 시트의 1번 행)
+            for (let i = 1; i < data.length; i++) {
+                const rowData = data[i];
+                // i (배열 인덱스)가 하이라이트 번호와 일치하는지 확인합니다. 
+                const isHighlighted = (i === highlightRowNumber); 
+                
+                if (rowData.some(cell => cell && cell.trim() !== '')) { 
+                    const tr = document.createElement('tr');
+                    let bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
+                    
+                    // 💡 하이라이트가 적용되면 기본 배경색을 덮어씁니다.
+                    tr.className = `${bgColor} hover:bg-white/10 ${isHighlighted ? 'highlight' : ''}`;
+                    
+                    rowData.forEach((cellText, colIndex) => {
+                        const td = document.createElement('td');
+                        
+                        // 💡 하이라이트된 행의 텍스트 색상을 흰색으로 고정합니다.
+                        const textColor = isHighlighted ? 'text-white' : 'text-gray-300';
+                        td.className = `px-2 py-4 text-sm text-center ${textColor} break-words`;
+                        
+                        let content = cellText || '';
+                        // 기존 로직 유지: HEAT, Time 열에서 줄바꿈 처리
+                        if (colIndex === 0 && content.includes(' ')) { // First column, HEAT
+                            content = content.replace(' ', '<br>');
+                        } else if (colIndex === 1 && content.includes('-')) { // Second column, Time
+                            content = content.replace('-', '<br>');
+                        }
+                        
+                        td.innerHTML = content;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                }
+            }
+            table.append(thead, tbody);
+            tableContainer.appendChild(table);
+        }
+
+        function renderStandardTable(data) {
+            tableContainer.innerHTML = '';
+            const table = document.createElement('table');
+            table.className = "min-w-full divide-y divide-gray-700";
+            
+            const thead = document.createElement('thead');
+            thead.className = "bg-gray-800";
+            const headerRow = document.createElement('tr');
+             if (!data || data.length === 0 || data[0].length === 0) {
+                displayError('점수판 데이터가 비어있습니다. 시트 범위를 확인하세요.');
+                return;
+            }
+            data[0].forEach(headerText => {
+                const th = document.createElement('th');
+                th.scope = "col";
+                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            const tbody = document.createElement('tbody');
+            tbody.className = "divide-y divide-gray-800";
+            for (let i = 1; i < data.length; i++) {
+                const rowData = data[i];
+                if (rowData.some(cell => cell && cell.trim() !== '')) { 
+                    const tr = document.createElement('tr');
+                    const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
+                    tr.className = `${bgColor} hover:bg-white/10`;
+                    const rank = rowData[0] ? String(rowData[0]).trim() : '';
+                    rowData.forEach((cellText, colIndex) => {
+                        const td = document.createElement('td');
+                        td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
+                        
+                        let content = cellText;
+                        if (colIndex === 1) { 
+                            if (rank === '1') content = `🥇 ${cellText}`;
+                            else if (rank === '2') content = `🥈 ${cellText}`;
+                            else if (rank === '3') content = `🥉 ${cellText}`;
+                        }
+                        td.textContent = content;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                }
+            }
+            table.append(thead, tbody);
+            tableContainer.appendChild(table);
+        }
+
+        function renderExpandableTable(data, visibleCols) {
+            tableContainer.innerHTML = '';
+            const table = document.createElement('table');
+            table.className = "min-w-full divide-y divide-gray-700";
+            
+            const thead = document.createElement('thead');
+            thead.className = "bg-gray-800";
+            const headerRow = document.createElement('tr');
+            
+            if (!data || data.length === 0 || data[0].length === 0) {
+                displayError('점수판 데이터가 비어있습니다. 시트 범위를 확인하세요.');
+                return;
+            }
+            const allHeaders = data[0];
+            const visibleHeaders = allHeaders.slice(0, visibleCols);
+            const hiddenHeaders = allHeaders.slice(visibleCols);
+
+            visibleHeaders.forEach(headerText => {
+                const th = document.createElement('th');
+                th.scope = "col";
+                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            const tbody = document.createElement('tbody');
+            tbody.className = "divide-y divide-gray-800";
+            
+            for (let i = 1; i < data.length; i++) {
+                const fullRowData = data[i];
+                if (!fullRowData || !fullRowData.some(cell => cell && cell.trim() !== '')) continue;
+
+                const visibleData = fullRowData.slice(0, visibleCols);
+                const hiddenData = fullRowData.slice(visibleCols);
+                
+                const rank = visibleData[0] ? String(visibleData[0]).trim() : '';
+
+                const mainRow = document.createElement('tr');
+                const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
+                mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
+                visibleData.forEach((cellText, colIndex) => {
+                    const td = document.createElement('td');
+                    td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
+                    let content = cellText || '';
+                    if (colIndex === 1) {
+                        if (rank === '1') content = `🥇 ${content}`;
+                        else if (rank === '2') content = `🥈 ${content}`;
+                        else if (rank === '3') content = `🥉 ${content}`;
+                    }
+                    td.textContent = content;
+                    mainRow.appendChild(td);
+                });
+
+                const detailsRow = document.createElement('tr');
+                detailsRow.className = "hidden details-row";
+                const detailsCell = document.createElement('td');
+                detailsCell.colSpan = visibleCols;
+                detailsCell.className = "p-0";
+                
+                const detailsContainer = document.createElement('div');
+                detailsContainer.className = "bg-gray-800 p-4";
+                
+                let detailsHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 text-sm">';
+                
+                // 숨겨진 열의 개수에 맞게 레이아웃 조정
+                const numHiddenCols = hiddenData.length;
+                let gridClass = 'grid-cols-1';
+                // 숨겨진 열이 4개 이상이면 4열, 3개면 3열, 2개면 2열
+                if (numHiddenCols >= 4) gridClass = 'lg:grid-cols-4';
+                else if (numHiddenCols === 3) gridClass = 'lg:grid-cols-3';
+                else if (numHiddenCols === 2) gridClass = 'sm:grid-cols-2';
+                
+                detailsHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-x-8 gap-y-2 text-sm">`;
+
+                for (let j = 0; j < hiddenData.length; j++) {
+                    detailsHTML += `<div><span class="font-semibold text-gray-400">${hiddenHeaders[j] || 'N/A'}:</span> <span class="text-white">${hiddenData[j] || 'N/A'}</span></div>`;
+                }
+                detailsHTML += '</div>';
+
+                detailsContainer.innerHTML = detailsHTML;
+                detailsCell.appendChild(detailsContainer);
+                detailsRow.appendChild(detailsCell);
+                
+                tbody.appendChild(mainRow);
+                tbody.appendChild(detailsRow);
+
+                mainRow.addEventListener('click', () => {
+                    const wasHidden = detailsRow.classList.contains('hidden');
+                    // 모든 확장된 행을 숨깁니다.
+                    tbody.querySelectorAll('.details-row').forEach(row => {
+                        row.classList.add('hidden');
+                    });
+                    // 클릭된 행의 상세 정보를 토글합니다.
+                    if(wasHidden) {
+                       detailsRow.classList.remove('hidden');
+                    }
+                });
+            }
+            table.append(thead, tbody);
+            tableContainer.appendChild(table);
+        }
+
+        function showLoading() {
+            statusDiv.innerHTML = '<div class="flex items-center gap-2"><div class="loader"></div><span>데이터를 갱신하는 중...</span></div>';
+        }
+        function updateStatus(message) { statusDiv.innerHTML = `<span>${message}</span>`; }
+        function displayError(message) {
+            statusDiv.innerHTML = `<span class="text-red-400 font-semibold">${message}</span>`;
+            wodSection.style.display = 'none'; // 에러 발생 시 WOD 섹션 숨김
+            tableContainer.innerHTML = `<div class="text-center p-10 bg-gray-800 rounded-lg"><p class="text-gray-400">${message}</p></div>`;
+        }
+        function displayAnnouncement(message) {
+            tableContainer.innerHTML = `<div class="text-center p-10 bg-gray-800 rounded-lg"><p class="text-2xl font-bold text-white">${message}</p></div>`;
+            wodSection.style.display = 'none';
+            updateStatus('');
+        }
+    </script>
+</body>
+</html>
