@@ -69,25 +69,22 @@
         const SPREADSHEET_ID = '1rXpKUIl2ioWWeMwtlmj-CR_6LoHYQuuP7k7GDRgd3WQ'; 
 
         // Event 3/4는 총 10열 (0~9). 
-        // 1열(인덱스 0), 3열(인덱스 2), 5열(인덱스 4), 7열(인덱스 6)을 표시해야 하므로 visibleCols = 4입니다.
+        // 표시 열: 1열(0), 3열(2), 5열(4), 7열(6) -> visibleCols = 4
         const SHEET_DATA_MAP = {
-            // EVENT 1: 일반 테이블 (A3:C6)
             event1: {
                 Elite: { range: "'결과지'!A3:C6", type: 'standard', wodRange: "'결과지'!A100" },
             },
-            // EVENT 2: 확장 가능 테이블 (F3:L26, 총 7열, 노출 4열)
             event2: {
                 Elite: { range: "'결과지'!F3:L26", type: 'expandable', visibleCols: 4, wodRange: "'결과지'!B100" },
             },
-            // EVENT 3: 특수 랭킹 처리 테이블 (N3:W16, 총 10열)
+            // Event 3: 특수 랭킹 처리 테이블
             event3: {
                 Elite: { range: "'결과지'!N3:W16", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!C100" },
             },
-            // EVENT 4: 특수 랭킹 처리 테이블 (N21:W26, 총 10열)
+            // Event 4: 특수 랭킹 처리 테이블
             event4: {
                 Elite: { range: "'결과지'!N21:W26", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!D100" },
             },
-            // Timetable: 범위 수정 ('timetable' 시트 사용)
             timetable: {
                 Elite: { 
                     range: "'timetable'!A1:F25", 
@@ -96,12 +93,11 @@
                     highlightRange: "'timetable'!G1" 
                 },
             },
-            // TOTAL RANK: 확장 가능 테이블 (A40:G43, 총 7열, 노출 3열)
             total: {
                 Elite: { 
-                    range: "'결과지'!A40:G43", // 전체 범위 (7열)
+                    range: "'결과지'!A40:G43", 
                     type: 'expandable', 
-                    visibleCols: 3, // 노출되는 열 수 (Rank, TeamName, Score)
+                    visibleCols: 3,
                     hideSwitchRange: "'Settings'!B1" 
                 },
             },
@@ -120,7 +116,6 @@
         let currentDivision = 'Elite';
 
         document.addEventListener('DOMContentLoaded', () => {
-            // API 키가 유효하지 않으면 에러 메시지 표시
             if (!API_KEY || API_KEY === '여기에_API_키를_붙여넣으세요' || !SPREADSHEET_ID || SPREADSHEET_ID === '여기에_스프레드시트_ID를_붙여넣으세요') {
                 displayError('⚠️ 주최자 확인 필요: HTML 파일 내에 API 키와 스프레드시트 ID를 설정해주세요.');
                 return;
@@ -260,7 +255,7 @@
             }
         }
         
-        // --- 💡 Event 3/4를 위한 특수 랭킹 처리 함수 (테두리 하이라이트) ---
+        // --- 💡 Event 3/4를 위한 특수 랭킹 처리 함수 (개별 테두리 하이라이트 및 상세 출력) ---
         function renderExpandableRankedTable(data, visibleCols) {
             tableContainer.innerHTML = '';
             const table = document.createElement('table');
@@ -276,14 +271,24 @@
             }
             
             const allHeaders = data[0];
-            // 표시될 인덱스: 0 (Heat), 2 (E3.1 Score), 4 (E3.2 Score), 6 (E3.3 Score)
+            
+            // 🚨 표시될 인덱스: 1열(0), 3열(2), 5열(4), 7열(6)
             const finalVisibleIndices = [0, 2, 4, 6].slice(0, visibleCols); 
             const finalVisibleHeaders = finalVisibleIndices.map(i => allHeaders[i]);
             
-            // 랭킹 데이터 인덱스: 1 (E3.1 Rank), 3 (E3.2 Rank), 5 (E3.3 Rank)
+            // 🚨 랭킹 데이터 인덱스 (숨겨짐, 테두리 결정용): 2열(1), 4열(3), 6열(5)
             const rankIndices = [1, 3, 5]; 
-            // 확장 정보 데이터 인덱스: 7, 8, 9 (3개)
-            const detailIndices = [7, 8, 9]; 
+            // 🚨 테두리가 적용될 표시 열의 인덱스 (팀 수행 이름, Score 1, Score 2)
+            // 표시 열의 인덱스는 1, 2, 3 입니다. (Heat: 0, TeamName: 1, Score1: 2, Score2: 3)
+            const borderColIndices = [1, 2, 3]; 
+
+            // 순위에 따라 클래스를 반환하는 헬퍼 함수
+            const getRankClass = (rank) => {
+                if (rank === 1) return 'border-gold';
+                if (rank === 2) return 'border-silver';
+                if (rank === 3) return 'border-bronze';
+                return '';
+            };
 
 
             finalVisibleHeaders.forEach(headerText => {
@@ -302,16 +307,12 @@
                 const fullRowData = data[i];
                 if (!fullRowData || !fullRowData.some(cell => cell && cell.trim() !== '')) continue;
 
-                // 순위 정보 추출 (인덱스 1, 3, 5)
-                const ranks = rankIndices.map(index => parseInt(fullRowData[index]) || 999);
+                // 랭킹 정보를 추출 및 클래스 배열 준비
+                const rankClasses = rankIndices.map(index => {
+                    const rank = parseInt(fullRowData[index]) || 999;
+                    return getRankClass(rank);
+                });
                 
-                // 가장 높은 순위(가장 낮은 숫자)를 찾습니다.
-                const overallRank = Math.min(...ranks);
-
-                let rankClass = '';
-                if (overallRank === 1) rankClass = 'border-gold';
-                else if (overallRank === 2) rankClass = 'border-silver';
-                else if (overallRank === 3) rankClass = 'border-bronze';
 
                 const mainRow = document.createElement('tr');
                 const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
@@ -325,9 +326,10 @@
                     td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
                     let content = cellText || '';
                     
-                    // 첫 번째 표시 열 (Heat Number, colIndex 0)에 테두리 적용
-                    if (colIndex === 0) { 
-                        // 🚨 에러 방지: rankClass가 빈 문자열이 아닐 때만 add 실행
+                    // 🚨 테두리 적용 (표시되는 2열, 3열, 4열에 각각 랭크 클래스 적용)
+                    const borderIndex = borderColIndices.indexOf(colIndex); // 1, 2, 3 중 해당하는지 확인
+                    if (borderIndex !== -1 && borderIndex < rankClasses.length) { 
+                        const rankClass = rankClasses[borderIndex];
                         if (rankClass !== '') {
                             td.classList.add(rankClass);
                         }
@@ -337,7 +339,7 @@
                     mainRow.appendChild(td);
                 });
 
-                // --- 상세 정보 행 구성 ---
+                // --- 상세 정보 행 구성 (모든 숨겨진 데이터 출력) ---
                 const detailsRow = document.createElement('tr');
                 detailsRow.className = "hidden details-row";
                 const detailsCell = document.createElement('td');
@@ -347,27 +349,23 @@
                 const detailsContainer = document.createElement('div');
                 detailsContainer.className = "bg-gray-800 p-4 text-left";
                 
-                let detailsHTML = '';
-                
-                // 1. 숨겨진 랭킹 데이터 (2, 4, 6열 - 인덱스 1, 3, 5) 표시
-                detailsHTML += '<div class="text-sm font-semibold text-white mb-2">개별 종목 순위 (숨김 열):</div>';
-                detailsHTML += '<div class="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 text-sm mb-4">';
-                rankIndices.forEach((index, j) => {
-                    const header = allHeaders[index] || `Rank ${j+1}`;
-                    const data = fullRowData[index] || '-';
-                    detailsHTML += `<div><span class="font-semibold text-gray-400">${header}:</span> <span class="text-white">${data}</span></div>`;
-                });
-                detailsHTML += '</div>';
-
-                // 2. 확장 정보 (8, 9, 10열 - 인덱스 7, 8, 9)를 한 줄씩 표시
-                detailsHTML += '<div class="text-sm font-semibold text-white mb-2">상세 기록 (8, 9, 10열):</div>';
+                let detailsHTML = '<div class="text-sm font-semibold text-white mb-2">팀 수행 이름 상세 정보</div>';
                 detailsHTML += '<ul class="list-disc list-inside space-y-1 text-sm">';
-                detailIndices.forEach(index => {
-                    const header = allHeaders[index] || `Detail ${index - 6}`;
-                    const data = fullRowData[index] || 'N/A';
-                    // 각 항목을 리스트 아이템으로 표시
+                
+                // 1. 숨겨진 랭킹 데이터 (2, 4, 6열 - 인덱스 1, 3, 5) 출력
+                rankIndices.forEach(index => {
+                    const header = allHeaders[index] || `Rank ${index}`;
+                    const data = fullRowData[index] || '-';
                     detailsHTML += `<li><span class="font-semibold text-gray-400">${header}:</span> <span class="text-white">${data}</span></li>`;
                 });
+
+                // 2. 확장 정보 (8, 9, 10열 - 인덱스 7, 8, 9) 출력
+                detailIndices.forEach(index => {
+                    const header = allHeaders[index] || `Detail ${index}`;
+                    const data = fullRowData[index] || 'N/A';
+                    detailsHTML += `<li><span class="font-semibold text-gray-400">${header}:</span> <span class="text-white">${data}</span></li>`;
+                });
+
                 detailsHTML += '</ul>';
 
                 detailsContainer.innerHTML = detailsHTML;
