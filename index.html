@@ -565,29 +565,23 @@
 
         function renderExpandableTable(data, visibleCols) {
             
-            // 💡 Event 2에서 괄호 안 텍스트만 줄 넘김 처리를 위한 헬퍼 함수
+            // 💡 괄호 줄 넘김 처리를 위한 헬퍼 함수
             const processContent = (text) => {
                 const content = String(text);
-                // 괄호 열린 위치를 찾습니다.
                 const openBracketIndex = content.indexOf('(');
                 
                 if (openBracketIndex !== -1) {
-                    // 괄호 앞 부분 (예: "203lbs")
                     const outside = content.substring(0, openBracketIndex).trim(); 
-                    // 괄호와 괄호 안의 내용 전체 (예: "(140lbs)")
                     const inside = content.substring(openBracketIndex); 
                     
-                    // 1. outside 텍스트와 inside 괄호 사이에 **일반 띄어쓰기**를 넣어
-                    //    해당 지점에서만 줄 넘김이 발생하도록 허용합니다.
-                    // 2. inside 괄호 부분은 **줄 넘김이 가능한 <span>**으로 감쌉니다.
+                    // 괄호 앞뒤에 띄어쓰기를 넣어 줄 넘김 기회를 만들고, break-words로 강제 줄바꿈 허용
                     return `${outside} <span class="whitespace-normal break-words">${inside}</span>`;
                 }
                 return content;
             };
             
-            // 💡 Event 2에서 1열의 '+' 기호를 기준으로 줄 넘김 처리하는 헬퍼 함수
+            // 💡 '+' 기호를 기준으로 줄 넘김 처리하는 헬퍼 함수
             const processWodName = (text) => {
-                // '+' 기호를 '<br>+'로 대체하여 줄 넘김을 강제합니다.
                 return String(text).replace(/\s\+\s/g, '<br>+ ');
             };
             
@@ -624,8 +618,8 @@
                 
                 let content = headerText;
                 
-                // 💡 Event 2, 3, 4에서 헤더에 팀 이미지 삽입 (여기서는 Event 2만 해당)
-                if (currentEvent === 'event2') {
+                // 💡 헤더에 팀 이미지 삽입 (Event 2, 3, 4)
+                if (currentEvent === 'event2' || currentEvent === 'event3' || currentEvent === 'event4') {
                     const teamImageHtml = getTeamImageHtml(headerText);
                     if (teamImageHtml) {
                         // 헤더 텍스트 뒤에 이미지 삽입
@@ -653,7 +647,6 @@
                 const hiddenData = fullRowData.slice(visibleCols);
                 
                 const rank = visibleData[0] ? String(visibleData[0]).trim() : '';
-                const teamName = visibleData[1] || ''; // 팀 이름은 항상 두 번째 보이는 열(인덱스 1)이라고 가정
 
                 const mainRow = document.createElement('tr');
                 const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
@@ -685,19 +678,20 @@
                         }
 
                     } else if (currentEvent === 'event2') {
-                        // Event 2 탭 처리 (WOD 이름 및 기록)
+                        // Event 2 탭 처리 (1열: 동작, 2, 3, 4열: 기록)
                         if (colIndex === 0) { 
                             // 0열 (동작 이름) - 줄 넘김 허용, '+' 기준 줄 넘김 적용
                             innerHtml = processWodName(content); 
+                            tdClasses += " whitespace-normal"; // 줄 넘김 허용
                         } else { 
-                            // 1열, 2열, 3열 (팀 기록) - 줄 넘김 허용, 괄호 줄 넘김 적용
+                            // 1열, 2열, 3열 (기록) - 줄 넘김 허용, 괄호 줄 넘김 적용
                             innerHtml = processContent(content); 
-                            tdClasses += " whitespace-nowrap";
+                            tdClasses += " whitespace-normal break-words"; // 줄 넘김 허용 및 긴 단어 강제 줄바꿈
                         }
                         td.innerHTML = innerHtml || content;
                         
                     } else {
-                        // 기본 처리 (Event 1 등 - 단, Event 1은 renderStandardTable에서 처리)
+                        // Event 3/4 등 기타 expandable table
                         td.textContent = content;
                         tdClasses += " whitespace-nowrap";
                     }
