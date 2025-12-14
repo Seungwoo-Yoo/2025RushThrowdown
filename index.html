@@ -516,12 +516,28 @@
             
             // 💡 Event 2에서 괄호 안 텍스트만 줄 넘김 처리를 위한 헬퍼 함수
             const processContent = (text) => {
-                const match = String(text).match(/(.*)\((.*)\)/);
-                if (match) {
-                    // 괄호 바깥 부분 + 괄호 안 부분에 break-all 적용
-                    return `${match[1]}(<span class="whitespace-normal break-all">${match[2]}</span>)`;
+                const content = String(text);
+                // 괄호 열린 위치를 찾습니다.
+                const openBracketIndex = content.indexOf('(');
+                
+                if (openBracketIndex !== -1) {
+                    // 괄호 앞 부분 (예: "203lbs")
+                    const outside = content.substring(0, openBracketIndex).trim(); 
+                    // 괄호와 괄호 안의 내용 전체 (예: "(140lbs)")
+                    const inside = content.substring(openBracketIndex); 
+                    
+                    // 1. outside 텍스트와 inside 괄호 사이에 **일반 띄어쓰기**를 넣어
+                    //    해당 지점에서만 줄 넘김이 발생하도록 허용합니다.
+                    // 2. inside 괄호 부분은 **줄 넘김이 가능한 <span>**으로 감쌉니다.
+                    return `${outside} <span class="whitespace-normal break-words">${inside}</span>`;
                 }
-                return text;
+                return content;
+            };
+            
+            // 💡 Event 2에서 1열의 '+' 기호를 기준으로 줄 넘김 처리하는 헬퍼 함수
+            const processWodName = (text) => {
+                // '+' 기호를 '<br>+'로 대체하여 줄 넘김을 강제합니다.
+                return String(text).replace(/\s\+\s/g, '<br>+ ');
             };
 
             tableContainer.innerHTML = '';
@@ -564,24 +580,24 @@
                 const mainRow = document.createElement('tr');
                 const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
                 mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
+                
                 visibleData.forEach((cellText, colIndex) => {
                     const td = document.createElement('td');
-                    td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
+                    let tdClasses = "px-4 py-4 text-sm text-center text-gray-300"; 
                     let content = cellText || '';
                     
-                    // 💡 Event 2 (expandable)에서 2열 이후의 데이터에 괄호 줄 넘김 적용
-                    if (colIndex >= 2) {
-                        td.innerHTML = processContent(content);
-                    } else {
-                        // 기존 랭크 이모지 로직 (첫 번째 표시 열에 랭크가 있을 경우)
-                        if (colIndex === 1) {
-                            if (rank === '1') content = `🥇 ${content}`;
-                            else if (rank === '2') content = `🥈 ${content}`;
-                            else if (rank === '3') content = `🥉 ${content}`;
-                        }
-                        td.textContent = content;
+                    if (colIndex === 0) { 
+                        // 0열 (동작 이름) - 줄 넘김 허용, '+' 기준 줄 넘김 적용
+                        td.innerHTML = processWodName(content); 
+                        
+                    } else { 
+                        // 1열, 2열, 3열 (팀 기록) - 줄 넘김 허용, 괄호 줄 넘김 적용
+                        td.innerHTML = processContent(content); 
                     }
-
+                    
+                    // 0열을 제외한 나머지 열은 랭크/팀이름 대신 팀 기록이므로, 이모지 처리는 생략
+                    // 0열에는 whitespace-nowrap 미적용
+                    td.className = tdClasses;
                     mainRow.appendChild(td);
                 });
 
