@@ -31,7 +31,7 @@
             height: 24px;
             border-radius: 50%; /* 원형 이미지 */
             object-fit: cover;
-            margin-right: 6px; /* 텍스트와 이미지 사이 간격 */
+            margin-left: 6px; /* 팀 이름 텍스트 뒤에 간격 추가 */
             vertical-align: middle;
             display: inline-block;
         }
@@ -116,8 +116,6 @@
         // ------------------------------------
         
         // --- 🖼️ 팀 이미지 매핑 설정 (필수 수정 구간) 🖼️ ---
-        // 🚨 여기에 실제 팀 이름과 GitHub Raw 이미지 URL을 정확히 매칭해주세요!
-        // 🚨 GitHub Pages URL 포맷: https://raw.githubusercontent.com/[사용자명]/[저장소명]/main/images/[파일이름]
         const TEAM_IMAGE_MAP = {
             "Team Adam": "https://raw.githubusercontent.com/Seungwoo-Yoo/2025RushThrowdown/main/images/adam.jpg",
             "Team Stone": "https://raw.githubusercontent.com/Seungwoo-Yoo/2025RushThrowdown/main/images/Stone.jpg",
@@ -343,7 +341,8 @@
                 // 💡 헤더에 팀 이미지 삽입 (Event 3/4)
                 const teamImageHtml = getTeamImageHtml(headerText);
                 if (teamImageHtml) {
-                    content = `${teamImageHtml} ${headerText}`;
+                    // 헤더 텍스트 뒤에 이미지 삽입
+                    content = `${headerText} ${teamImageHtml}`;
                     th.innerHTML = content;
                 } else {
                     th.textContent = headerText;
@@ -391,7 +390,7 @@
                             td.classList.add(rankClass);
                         }
                         
-                        // 2. 이모지 추가
+                        // 2. 이모지 추가 (앞에 유지)
                         content = rankEmoji + content;
                     }
 
@@ -463,7 +462,7 @@
             data[0].forEach(headerText => {
                 const th = document.createElement('th');
                 th.scope = "col";
-                th.className = "py-3.5 px-2 text-center text-sm font-semibold text-white";
+                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
                 th.textContent = headerText;
                 headerRow.appendChild(th);
             });
@@ -542,14 +541,14 @@
                         if (colIndex === 1) { // 2열: 팀 이름/데이터
                             const teamName = cellText ? String(cellText).trim() : '';
                             
-                            // 1. 랭크 이모지 추가
+                            // 1. 랭크 이모지 추가 (앞에 유지)
                             if (rank === '1') innerHtml = `🥇 ${content}`;
                             else if (rank === '2') innerHtml = `🥈 ${content}`;
                             else if (rank === '3') innerHtml = `🥉 ${content}`;
                             
-                            // 2. 팀 이미지 삽입
+                            // 2. 팀 이미지 삽입 (뒤에 붙이기)
                             const teamImageHtml = getTeamImageHtml(teamName);
-                            innerHtml = teamImageHtml + innerHtml;
+                            innerHtml = innerHtml + teamImageHtml;
                             
                             td.innerHTML = innerHtml;
                         } else {
@@ -624,12 +623,13 @@
                 th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
                 
                 let content = headerText;
-
+                
                 // 💡 Event 2, 3, 4에서 헤더에 팀 이미지 삽입 (여기서는 Event 2만 해당)
                 if (currentEvent === 'event2') {
                     const teamImageHtml = getTeamImageHtml(headerText);
                     if (teamImageHtml) {
-                        content = `${teamImageHtml} ${headerText}`;
+                        // 헤더 텍스트 뒤에 이미지 삽입
+                        content = `${headerText} ${teamImageHtml}`;
                         th.innerHTML = content;
                     } else {
                         th.textContent = headerText;
@@ -653,6 +653,7 @@
                 const hiddenData = fullRowData.slice(visibleCols);
                 
                 const rank = visibleData[0] ? String(visibleData[0]).trim() : '';
+                const teamName = visibleData[1] || ''; // 팀 이름은 항상 두 번째 보이는 열(인덱스 1)이라고 가정
 
                 const mainRow = document.createElement('tr');
                 const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
@@ -669,12 +670,12 @@
                         if (colIndex === 1) {
                             const teamName = cellText ? String(cellText).trim() : '';
 
-                            // 1. 랭크 이모지 추가
+                            // 1. 랭크 이모지 추가 (앞에 유지)
                             innerHtml = getRankEmojiTotal(rank) + content;
                             
-                            // 2. 팀 이미지 삽입
+                            // 2. 팀 이미지 삽입 (뒤에 붙이기)
                             const teamImageHtml = getTeamImageHtml(teamName);
-                            innerHtml = teamImageHtml + innerHtml;
+                            innerHtml = innerHtml + teamImageHtml;
 
                             td.innerHTML = innerHtml;
                             tdClasses += " whitespace-nowrap"; 
