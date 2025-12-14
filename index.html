@@ -9,7 +9,7 @@
     <style>
         body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background-color: #111827; color: #d1d5db; }
         .tab { transition: all 0.2s ease-in-out; }
-        .tab.active { color: #facc15; border-color: #facc15; background-color: #1f2937; /* bg-gray-800 */ }
+        .tab.active { color: #facc15; border-color: #facc15; }
         .loader { border: 4px solid #4b5563; border-top: 4px solid #facc15; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .details-row.hidden, #wod-content.hidden { display: none; }
@@ -20,17 +20,10 @@
             font-weight: 700 !important;
         }
 
-        /* 🏆 메달 테두리 스타일 (4px -> 6px) */
-        .border-gold { border-left: 6px solid #FFD700; }
-        .border-silver { border-left: 6px solid #C0C0C0; }
-        .border-bronze { border-left: 6px solid #CD7F32; }
-        
-        /* 🏆 1위 배경 스타일 (Yellow 900 / 20%) */
-        .bg-gold-subtle { background-color: rgba(133, 77, 14, 0.2) !important; } 
-
-        /* UX 개선: 행 호버 변형 및 배경 조정 */
-        .main-row-hover { transition: all 0.2s ease-in-out; }
-        .main-row-hover:hover { transform: scale(1.005); background-color: rgba(255, 255, 255, 0.07); } /* 기존 hover:bg-white/10 보다 조금 밝게 */
+        /* 🏆 메달 테두리 스타일 */
+        .border-gold { border-left: 4px solid #FFD700; }
+        .border-silver { border-left: 4px solid #C0C0C0; }
+        .border-bronze { border-left: 4px solid #CD7F32; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -62,12 +55,12 @@
             <button id="wod-toggle-button" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors duration-200">
                 WOD DETAILS
             </button>
-            <div id="wod-content" class="hidden mt-4 p-4 bg-gray-800 rounded-lg text-left whitespace-pre-wrap max-w-2xl mx-auto font-mono tracking-wide leading-relaxed">
+            <div id="wod-content" class="hidden mt-4 p-4 bg-gray-800 rounded-lg text-left whitespace-pre-wrap max-w-2xl mx-auto">
             </div>
         </div>
 
         <div id="status" class="h-8 flex items-center justify-center text-sm text-gray-400 mb-4"></div>
-        <div id="tableContainer" class="overflow-x-auto shadow-2xl rounded-lg"></div>
+        <div id="tableContainer" class="overflow-x-auto"></div>
     </div>
 
     <script>
@@ -269,7 +262,7 @@
             table.className = "min-w-full divide-y divide-gray-700";
             
             const thead = document.createElement('thead');
-            thead.className = "bg-gray-900"; // 헤더 대비 강화
+            thead.className = "bg-gray-800";
             const headerRow = document.createElement('tr');
             
             if (!data || data.length === 0 || data[0].length === 0) {
@@ -327,19 +320,17 @@
 
                 // 랭킹 정보를 추출 및 클래스 배열 준비
                 const rankClasses = [];
+                const rankEmojis = [];
                 rankIndices.forEach(index => {
                     const rank = fullRowData[index];
                     rankClasses.push(getRankClass(rank));
+                    rankEmojis.push(getRankEmoji(rank));
                 });
                 
-                // 1등 기록이 하나라도 있는지 확인 (배경색 적용용)
-                const isFirstPlace = rankClasses.includes('border-gold');
-                
+
                 const mainRow = document.createElement('tr');
                 const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                
-                // UX 개선: main-row-hover 및 1위 배경색 적용
-                mainRow.className = `${bgColor} main-row-hover cursor-pointer hover:bg-white/10 transition-colors duration-200 ${isFirstPlace ? 'bg-gold-subtle' : ''}`;
+                mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
                 
                 // 표시될 데이터만 추출
                 const visibleData = finalVisibleIndices.map(index => fullRowData[index]); 
@@ -351,10 +342,9 @@
                     
                     // 🚨 테두리 및 이모지 적용
                     const borderIndex = borderColIndices.indexOf(colIndex); // 1, 2, 3 중 해당하는지 확인
-                    if (borderIndex !== -1 && borderIndex < rankIndices.length) { 
-                        const rank = fullRowData[rankIndices[borderIndex]] || '';
-                        const rankClass = getRankClass(rank);
-                        const rankEmoji = getRankEmoji(rank);
+                    if (borderIndex !== -1 && borderIndex < rankClasses.length) { 
+                        const rankClass = rankClasses[borderIndex];
+                        const rankEmoji = rankEmojis[borderIndex];
                         
                         // 1. 테두리 적용
                         if (rankClass !== '') {
@@ -423,7 +413,7 @@
             table.className = "min-w-full divide-y divide-gray-700 table-fixed";
             
             const thead = document.createElement('thead');
-            thead.className = "bg-gray-900"; // 헤더 대비 강화
+            thead.className = "bg-gray-800";
             const headerRow = document.createElement('tr');
             
             if (!data || data.length === 0 || data[0].length === 0) {
@@ -448,8 +438,7 @@
                 if (rowData.some(cell => cell && cell.trim() !== '')) { 
                     const tr = document.createElement('tr');
                     let bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                    // UX 개선: main-row-hover 적용
-                    tr.className = `${bgColor} main-row-hover hover:bg-white/10 ${isHighlighted ? 'highlight' : ''}`;
+                    tr.className = `${bgColor} hover:bg-white/10 ${isHighlighted ? 'highlight' : ''}`;
                     
                     rowData.forEach((cellText, colIndex) => {
                         const td = document.createElement('td');
@@ -479,7 +468,7 @@
             table.className = "min-w-full divide-y divide-gray-700";
             
             const thead = document.createElement('thead');
-            thead.className = "bg-gray-900"; // 헤더 대비 강화
+            thead.className = "bg-gray-800";
             const headerRow = document.createElement('tr');
              if (!data || data.length === 0 || data[0].length === 0) {
                 displayError('점수판 데이터가 비어있습니다. 시트 범위를 확인하세요.');
@@ -501,15 +490,8 @@
                 if (rowData.some(cell => cell && cell.trim() !== '')) { 
                     const tr = document.createElement('tr');
                     const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                    // UX 개선: main-row-hover 적용
-                    tr.className = `${bgColor} main-row-hover hover:bg-white/10`;
+                    tr.className = `${bgColor} hover:bg-white/10`;
                     const rank = rowData[0] ? String(rowData[0]).trim() : '';
-                    
-                    // 1등 배경색 적용 (0열이 랭킹인 standard table의 경우)
-                    if (rank === '1') {
-                         tr.classList.add('bg-gold-subtle');
-                    }
-
                     rowData.forEach((cellText, colIndex) => {
                         const td = document.createElement('td');
                         td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
@@ -563,7 +545,7 @@
             table.className = "min-w-full divide-y divide-gray-700";
             
             const thead = document.createElement('thead');
-            thead.className = "bg-gray-900"; // 헤더 대비 강화
+            thead.className = "bg-gray-800";
             const headerRow = document.createElement('tr');
             
             if (!data || data.length === 0 || data[0].length === 0) {
@@ -597,9 +579,7 @@
 
                 const mainRow = document.createElement('tr');
                 const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                
-                // UX 개선: main-row-hover 적용
-                mainRow.className = `${bgColor} main-row-hover cursor-pointer hover:bg-white/10 transition-colors duration-200`;
+                mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
                 
                 visibleData.forEach((cellText, colIndex) => {
                     const td = document.createElement('td');
@@ -615,6 +595,7 @@
                         td.innerHTML = processContent(content); 
                     }
                     
+                    // 0열을 제외한 나머지 열은 랭크/팀이름 대신 팀 기록이므로, 이모지 처리는 생략
                     // 0열에는 whitespace-nowrap 미적용
                     td.className = tdClasses;
                     mainRow.appendChild(td);
