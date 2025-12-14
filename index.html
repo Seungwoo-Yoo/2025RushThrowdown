@@ -320,14 +320,11 @@
 
                 // 랭킹 정보를 추출 및 클래스 배열 준비
                 const rankClasses = [];
-                const rankEmojis = [];
                 rankIndices.forEach(index => {
                     const rank = fullRowData[index];
                     rankClasses.push(getRankClass(rank));
-                    rankEmojis.push(getRankEmoji(rank));
                 });
                 
-
                 const mainRow = document.createElement('tr');
                 const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
                 mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
@@ -342,9 +339,10 @@
                     
                     // 🚨 테두리 및 이모지 적용
                     const borderIndex = borderColIndices.indexOf(colIndex); // 1, 2, 3 중 해당하는지 확인
-                    if (borderIndex !== -1 && borderIndex < rankClasses.length) { 
-                        const rankClass = rankClasses[borderIndex];
-                        const rankEmoji = rankEmojis[borderIndex];
+                    if (borderIndex !== -1 && borderIndex < rankIndices.length) { 
+                        const rank = fullRowData[rankIndices[borderIndex]] || '';
+                        const rankClass = getRankClass(rank);
+                        const rankEmoji = getRankEmoji(rank);
                         
                         // 1. 테두리 적용
                         if (rankClass !== '') {
@@ -539,6 +537,16 @@
                 // '+' 기호를 '<br>+'로 대체하여 줄 넘김을 강제합니다.
                 return String(text).replace(/\s\+\s/g, '<br>+ ');
             };
+            
+            // 💡 Total 탭을 위한 랭크 이모지 헬퍼 함수
+            const getRankEmojiTotal = (rank) => {
+                const r = String(rank).trim();
+                if (r === '1') return '🥇 ';
+                if (r === '2') return '🥈 ';
+                if (r === '3') return '🥉 ';
+                return '';
+            };
+
 
             tableContainer.innerHTML = '';
             const table = document.createElement('table');
@@ -586,17 +594,29 @@
                     let tdClasses = "px-4 py-4 text-sm text-center text-gray-300"; 
                     let content = cellText || '';
                     
-                    if (colIndex === 0) { 
-                        // 0열 (동작 이름) - 줄 넘김 허용, '+' 기준 줄 넘김 적용
-                        td.innerHTML = processWodName(content); 
-                        
-                    } else { 
-                        // 1열, 2열, 3열 (팀 기록) - 줄 넘김 허용, 괄호 줄 넘김 적용
-                        td.innerHTML = processContent(content); 
+                    if (currentEvent === 'total') {
+                        // Total 탭 처리: 랭크(0열), 팀 이름(1열)
+                        if (colIndex === 1) {
+                            // 1열(팀 이름)에 이모지 추가
+                            content = getRankEmojiTotal(rank) + content;
+                            td.textContent = content; 
+                            tdClasses += " whitespace-nowrap"; // Total 팀 이름은 줄넘김 방지
+                        } else {
+                            td.textContent = content;
+                            tdClasses += " whitespace-nowrap"; // Total 랭크, 점수도 줄넘김 방지
+                        }
+
+                    } else if (currentEvent === 'event2') {
+                        // Event 2 탭 처리 (WOD 이름 및 기록)
+                        if (colIndex === 0) { 
+                            // 0열 (동작 이름) - 줄 넘김 허용, '+' 기준 줄 넘김 적용
+                            td.innerHTML = processWodName(content); 
+                        } else { 
+                            // 1열, 2열, 3열 (팀 기록) - 줄 넘김 허용, 괄호 줄 넘김 적용
+                            td.innerHTML = processContent(content); 
+                        }
                     }
-                    
-                    // 0열을 제외한 나머지 열은 랭크/팀이름 대신 팀 기록이므로, 이모지 처리는 생략
-                    // 0열에는 whitespace-nowrap 미적용
+
                     td.className = tdClasses;
                     mainRow.appendChild(td);
                 });
@@ -621,8 +641,12 @@
 
                 for (let j = 0; j < hiddenData.length; j++) {
                     let detailContent = hiddenData[j] || 'N/A';
-                    // 💡 상세 행에서도 괄호 줄 넘김 적용
-                    detailContent = processContent(detailContent);
+                    
+                    // Event 2나 Total에서 숨겨진 기록 열에만 괄호 줄 넘김 적용
+                    if (currentEvent === 'event2' || currentEvent === 'total') {
+                        detailContent = processContent(detailContent);
+                    }
+
                     detailsHTML += `<div><span class="font-semibold text-gray-400">${hiddenHeaders[j] || 'N/A'}:</span> <span class="text-white">${detailContent}</span></div>`;
                 }
                 detailsHTML += '</div>';
