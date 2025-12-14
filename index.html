@@ -80,9 +80,6 @@
                 Elite: { range: "'결과지'!F3:L26", type: 'expandable', visibleCols: 4, wodRange: "'결과지'!B100" },
             },
             // EVENT 3: 특수 랭킹 처리 테이블 (N3:W16, 총 10열)
-            // 표시 열: 1, 3, 5, 7열 (총 4열)
-            // 랭킹 데이터: 2, 4, 6열 (인덱스 1, 3, 5) 사용
-            // 확장 상세 정보: 8, 9, 10열 (인덱스 7, 8, 9) 사용
             event3: {
                 Elite: { range: "'결과지'!N3:W16", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!C100" },
             },
@@ -123,6 +120,7 @@
         let currentDivision = 'Elite';
 
         document.addEventListener('DOMContentLoaded', () => {
+            // API 키가 유효하지 않으면 에러 메시지 표시
             if (!API_KEY || API_KEY === '여기에_API_키를_붙여넣으세요' || !SPREADSHEET_ID || SPREADSHEET_ID === '여기에_스프레드시트_ID를_붙여넣으세요') {
                 displayError('⚠️ 주최자 확인 필요: HTML 파일 내에 API 키와 스프레드시트 ID를 설정해주세요.');
                 return;
@@ -327,10 +325,12 @@
                     td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
                     let content = cellText || '';
                     
-                    // 첫 번째 표시 열 (Heat Number)에 테두리 적용
+                    // 첫 번째 표시 열 (Heat Number, colIndex 0)에 테두리 적용
                     if (colIndex === 0) { 
-                        td.classList.add(rankClass);
-                        // Heat Number에 메달 이모티콘을 추가하지 않음 (요청에 따라)
+                        // 🚨 에러 방지: rankClass가 빈 문자열이 아닐 때만 add 실행
+                        if (rankClass !== '') {
+                            td.classList.add(rankClass);
+                        }
                     }
 
                     td.textContent = content;
@@ -350,7 +350,6 @@
                 let detailsHTML = '';
                 
                 // 1. 숨겨진 랭킹 데이터 (2, 4, 6열 - 인덱스 1, 3, 5) 표시
-                // 이 데이터는 한 줄씩 표시할 필요 없이 Grid로 표시하는 것이 일반적입니다.
                 detailsHTML += '<div class="text-sm font-semibold text-white mb-2">개별 종목 순위 (숨김 열):</div>';
                 detailsHTML += '<div class="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 text-sm mb-4">';
                 rankIndices.forEach((index, j) => {
