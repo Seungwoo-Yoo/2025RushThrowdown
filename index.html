@@ -19,6 +19,11 @@
             color: #ffffff !important;
             font-weight: 700 !important;
         }
+
+        /* 🏆 메달 테두리 스타일 */
+        .border-gold { border-left: 4px solid #FFD700; }
+        .border-silver { border-left: 4px solid #C0C0C0; }
+        .border-bronze { border-left: 4px solid #CD7F32; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -60,28 +65,30 @@
 
     <script>
         // --- ⚠️ 주최자 설정 부분 ⚠️ ---
-        // 💡 여기에 유효한 API 키를 넣어주세요! (기존 키 사용 확인)
         const API_KEY = 'AIzaSyDiYqUz6S9MgxnSvsNLHe26wOj77YfXSHc'; 
-        // 💡 스프레드시트 ID는 제공해주신 주소로 설정되었습니다.
         const SPREADSHEET_ID = '1rXpKUIl2ioWWeMwtlmj-CR_6LoHYQuuP7k7GDRgd3WQ'; 
 
-        // Elite 디비전과 모든 이벤트 탭에 해당하는 시트 정보 설정
+        // Event 3/4는 총 10열 (0~9). 
+        // 1열(인덱스 0), 3열(인덱스 2), 5열(인덱스 4), 7열(인덱스 6)을 표시해야 하므로 visibleCols = 4입니다.
         const SHEET_DATA_MAP = {
             // EVENT 1: 일반 테이블 (A3:C6)
             event1: {
                 Elite: { range: "'결과지'!A3:C6", type: 'standard', wodRange: "'결과지'!A100" },
             },
-            // EVENT 2: 확장 가능 테이블 (F3:L26, 총 7열, 노출 3열)
+            // EVENT 2: 확장 가능 테이블 (F3:L26, 총 7열, 노출 4열)
             event2: {
                 Elite: { range: "'결과지'!F3:L26", type: 'expandable', visibleCols: 4, wodRange: "'결과지'!B100" },
             },
-            // EVENT 3: 확장 가능 테이블 (N3:W16, 총 10열, 노출 3열)
+            // EVENT 3: 특수 랭킹 처리 테이블 (N3:W16, 총 10열)
+            // 표시 열: 1, 3, 5, 7열 (총 4열)
+            // 랭킹 데이터: 2, 4, 6열 (인덱스 1, 3, 5) 사용
+            // 확장 상세 정보: 8, 9, 10열 (인덱스 7, 8, 9) 사용
             event3: {
-                Elite: { range: "'결과지'!N3:W16", type: 'expandable', visibleCols: 7, wodRange: "'결과지'!C100" },
+                Elite: { range: "'결과지'!N3:W16", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!C100" },
             },
-            // EVENT 4: 확장 가능 테이블 (N21:W26, 총 10열, 노출 3열)
+            // EVENT 4: 특수 랭킹 처리 테이블 (N21:W26, 총 10열)
             event4: {
-                Elite: { range: "'결과지'!N21:W26", type: 'expandable', visibleCols: 7, wodRange: "'결과지'!D100" },
+                Elite: { range: "'결과지'!N21:W26", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!D100" },
             },
             // Timetable: 범위 수정 ('timetable' 시트 사용)
             timetable: {
@@ -112,8 +119,8 @@
         const wodContent = document.getElementById('wod-content');
         const REFRESH_INTERVAL = 15000;
 
-        let currentEvent = 'event1'; // 기본 탭을 'event1'로 설정
-        let currentDivision = 'Elite'; // Division을 'Elite'로 고정
+        let currentEvent = 'event1';
+        let currentDivision = 'Elite';
 
         document.addEventListener('DOMContentLoaded', () => {
             if (!API_KEY || API_KEY === '여기에_API_키를_붙여넣으세요' || !SPREADSHEET_ID || SPREADSHEET_ID === '여기에_스프레드시트_ID를_붙여넣으세요') {
@@ -133,7 +140,6 @@
                 tab.addEventListener('click', () => {
                     currentEvent = tab.dataset.tab;
                     
-                    // Timetable/Total 탭이 선택되면 WOD 섹션을 숨깁니다.
                     if (currentEvent === 'timetable' || currentEvent === 'total') {
                         wodSection.style.display = 'none';
                     } else {
@@ -145,12 +151,10 @@
                     fetchAndDisplayData();
                 });
             });
-            // WOD 토글 버튼 리스너는 유지
             wodToggleButton.addEventListener('click', () => {
                 wodContent.classList.toggle('hidden');
             });
             
-            // 초기 로드 시 WOD 섹션 상태 설정 (default: event1)
             wodSection.style.display = 'block';
         }
 
@@ -171,7 +175,6 @@
 
         async function fetchAndDisplayData() {
             showLoading();
-            // currentDivision이 'Elite'로 고정되어 있음
             const config = SHEET_DATA_MAP[currentEvent] ? SHEET_DATA_MAP[currentEvent][currentDivision] : null; 
             
             if (!config || !config.range) {
@@ -180,7 +183,6 @@
                 }
             }
             
-            // Total 탭 숨김 처리 로직 유지
             if (currentEvent === 'total' && config.hideSwitchRange) {
                 try {
                     const hideSwitchResult = await fetchData(config.hideSwitchRange);
@@ -196,7 +198,6 @@
             const leaderboardPromise = fetchData(config.range);
             const wodPromise = (currentEvent !== 'timetable' && currentEvent !== 'total' && config.wodRange) ? fetchData(config.wodRange) : Promise.resolve(null);
             
-            // 💡 Timetable 탭일 경우 하이라이트 범위 데이터도 함께 가져옵니다.
             const highlightPromise = (currentEvent === 'timetable' && config.highlightRange) ? fetchData(config.highlightRange) : Promise.resolve(null);
 
 
@@ -204,11 +205,9 @@
                 const [leaderboardResult, wodResult, highlightResult] = await Promise.all([leaderboardPromise, wodPromise, highlightPromise]);
 
                 if (leaderboardResult) {
-                    // 💡 Timetable의 경우 하이라이트 결과를 함께 전달합니다.
                     if (currentEvent === 'timetable') {
                         let highlightRowNumber = null;
                         if (highlightResult && highlightResult[0] && highlightResult[0][0]) {
-                            // 시트에서 가져온 값을 정수로 변환합니다.
                             highlightRowNumber = parseInt(highlightResult[0][0].trim()); 
                             if (isNaN(highlightRowNumber)) highlightRowNumber = null;
                         }
@@ -221,13 +220,11 @@
                     displayError('선택된 탭에 데이터가 없습니다. 시트 이름과 범위를 확인해주세요.');
                 }
                 
-                // WOD 섹션 처리 (Timetable/Total 제외)
                 if (currentEvent !== 'timetable' && currentEvent !== 'total') {
                     if (wodResult && wodResult.length > 0 && wodResult[0][0]) {
                         wodSection.style.display = 'block';
                         wodContent.textContent = wodResult[0][0];
                     } else {
-                        // 데이터는 있지만 WOD 설명이 없는 경우
                         wodSection.style.display = 'block';
                     }
                 }
@@ -254,17 +251,149 @@
 
 
         function renderTable(data, config) {
-            if (config.type === 'expandable') {
+            if (config.type === 'expandable_ranked') {
+                renderExpandableRankedTable(data, config.visibleCols);
+            } else if (config.type === 'expandable') {
                 renderExpandableTable(data, config.visibleCols);
             } else if (config.type === 'timetable') {
-                // highlightRowIndex는 fetchAndDisplayData에서 전달되므로 여기서 처리하지 않습니다.
                 renderTimetable(data, null); 
             } else {
                 renderStandardTable(data);
             }
         }
         
-        // 💡 highlightRowNumber 인수를 추가했습니다. (시트 행 번호, 1부터 시작)
+        // --- 💡 Event 3/4를 위한 특수 랭킹 처리 함수 (테두리 하이라이트) ---
+        function renderExpandableRankedTable(data, visibleCols) {
+            tableContainer.innerHTML = '';
+            const table = document.createElement('table');
+            table.className = "min-w-full divide-y divide-gray-700";
+            
+            const thead = document.createElement('thead');
+            thead.className = "bg-gray-800";
+            const headerRow = document.createElement('tr');
+            
+            if (!data || data.length === 0 || data[0].length === 0) {
+                displayError('점수판 데이터가 비어있습니다. 시트 범위를 확인하세요.');
+                return;
+            }
+            
+            const allHeaders = data[0];
+            // 표시될 인덱스: 0 (Heat), 2 (E3.1 Score), 4 (E3.2 Score), 6 (E3.3 Score)
+            const finalVisibleIndices = [0, 2, 4, 6].slice(0, visibleCols); 
+            const finalVisibleHeaders = finalVisibleIndices.map(i => allHeaders[i]);
+            
+            // 랭킹 데이터 인덱스: 1 (E3.1 Rank), 3 (E3.2 Rank), 5 (E3.3 Rank)
+            const rankIndices = [1, 3, 5]; 
+            // 확장 정보 데이터 인덱스: 7, 8, 9 (3개)
+            const detailIndices = [7, 8, 9]; 
+
+
+            finalVisibleHeaders.forEach(headerText => {
+                const th = document.createElement('th');
+                th.scope = "col";
+                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            const tbody = document.createElement('tbody');
+            tbody.className = "divide-y divide-gray-800";
+            
+            for (let i = 1; i < data.length; i++) {
+                const fullRowData = data[i];
+                if (!fullRowData || !fullRowData.some(cell => cell && cell.trim() !== '')) continue;
+
+                // 순위 정보 추출 (인덱스 1, 3, 5)
+                const ranks = rankIndices.map(index => parseInt(fullRowData[index]) || 999);
+                
+                // 가장 높은 순위(가장 낮은 숫자)를 찾습니다.
+                const overallRank = Math.min(...ranks);
+
+                let rankClass = '';
+                if (overallRank === 1) rankClass = 'border-gold';
+                else if (overallRank === 2) rankClass = 'border-silver';
+                else if (overallRank === 3) rankClass = 'border-bronze';
+
+                const mainRow = document.createElement('tr');
+                const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
+                mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
+                
+                // 표시될 데이터만 추출
+                const visibleData = finalVisibleIndices.map(index => fullRowData[index]); 
+
+                visibleData.forEach((cellText, colIndex) => {
+                    const td = document.createElement('td');
+                    td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
+                    let content = cellText || '';
+                    
+                    // 첫 번째 표시 열 (Heat Number)에 테두리 적용
+                    if (colIndex === 0) { 
+                        td.classList.add(rankClass);
+                        // Heat Number에 메달 이모티콘을 추가하지 않음 (요청에 따라)
+                    }
+
+                    td.textContent = content;
+                    mainRow.appendChild(td);
+                });
+
+                // --- 상세 정보 행 구성 ---
+                const detailsRow = document.createElement('tr');
+                detailsRow.className = "hidden details-row";
+                const detailsCell = document.createElement('td');
+                detailsCell.colSpan = visibleCols;
+                detailsCell.className = "p-0";
+                
+                const detailsContainer = document.createElement('div');
+                detailsContainer.className = "bg-gray-800 p-4 text-left";
+                
+                let detailsHTML = '';
+                
+                // 1. 숨겨진 랭킹 데이터 (2, 4, 6열 - 인덱스 1, 3, 5) 표시
+                // 이 데이터는 한 줄씩 표시할 필요 없이 Grid로 표시하는 것이 일반적입니다.
+                detailsHTML += '<div class="text-sm font-semibold text-white mb-2">개별 종목 순위 (숨김 열):</div>';
+                detailsHTML += '<div class="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 text-sm mb-4">';
+                rankIndices.forEach((index, j) => {
+                    const header = allHeaders[index] || `Rank ${j+1}`;
+                    const data = fullRowData[index] || '-';
+                    detailsHTML += `<div><span class="font-semibold text-gray-400">${header}:</span> <span class="text-white">${data}</span></div>`;
+                });
+                detailsHTML += '</div>';
+
+                // 2. 확장 정보 (8, 9, 10열 - 인덱스 7, 8, 9)를 한 줄씩 표시
+                detailsHTML += '<div class="text-sm font-semibold text-white mb-2">상세 기록 (8, 9, 10열):</div>';
+                detailsHTML += '<ul class="list-disc list-inside space-y-1 text-sm">';
+                detailIndices.forEach(index => {
+                    const header = allHeaders[index] || `Detail ${index - 6}`;
+                    const data = fullRowData[index] || 'N/A';
+                    // 각 항목을 리스트 아이템으로 표시
+                    detailsHTML += `<li><span class="font-semibold text-gray-400">${header}:</span> <span class="text-white">${data}</span></li>`;
+                });
+                detailsHTML += '</ul>';
+
+                detailsContainer.innerHTML = detailsHTML;
+                detailsCell.appendChild(detailsContainer);
+                detailsRow.appendChild(detailsCell);
+                
+                tbody.appendChild(mainRow);
+                tbody.appendChild(detailsRow);
+
+                mainRow.addEventListener('click', () => {
+                    const wasHidden = detailsRow.classList.contains('hidden');
+                    tbody.querySelectorAll('.details-row').forEach(row => {
+                        row.classList.add('hidden');
+                    });
+                    if(wasHidden) {
+                       detailsRow.classList.remove('hidden');
+                    }
+                });
+            }
+            table.append(thead, tbody);
+            tableContainer.appendChild(table);
+        }
+        // --- End of renderExpandableRankedTable ---
+
+
         function renderTimetable(data, highlightRowNumber) {
             tableContainer.innerHTML = '';
             const table = document.createElement('table');
@@ -289,29 +418,21 @@
 
             const tbody = document.createElement('tbody');
             tbody.className = "divide-y divide-gray-800";
-            // 💡 헤더(data[0])를 제외한 데이터 행을 순회합니다. 
-            // 데이터 배열 인덱스 i는 시트의 행 번호와 일치합니다. (data[1] = 시트의 1번 행)
             for (let i = 1; i < data.length; i++) {
                 const rowData = data[i];
-                // i (배열 인덱스)가 하이라이트 번호와 일치하는지 확인합니다. 
                 const isHighlighted = (i === highlightRowNumber); 
                 
                 if (rowData.some(cell => cell && cell.trim() !== '')) { 
                     const tr = document.createElement('tr');
                     let bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                    
-                    // 💡 하이라이트가 적용되면 기본 배경색을 덮어씁니다.
                     tr.className = `${bgColor} hover:bg-white/10 ${isHighlighted ? 'highlight' : ''}`;
                     
                     rowData.forEach((cellText, colIndex) => {
                         const td = document.createElement('td');
-                        
-                        // 💡 하이라이트된 행의 텍스트 색상을 흰색으로 고정합니다.
                         const textColor = isHighlighted ? 'text-white' : 'text-gray-300';
                         td.className = `px-2 py-4 text-sm text-center ${textColor} break-words`;
                         
                         let content = cellText || '';
-                        // 기존 로직 유지: HEAT, Time 열에서 줄바꿈 처리
                         if (colIndex === 0 && content.includes(' ')) { // First column, HEAT
                             content = content.replace(' ', '<br>');
                         } else if (colIndex === 1 && content.includes('-')) { // Second column, Time
@@ -441,17 +562,14 @@
                 const detailsContainer = document.createElement('div');
                 detailsContainer.className = "bg-gray-800 p-4";
                 
-                let detailsHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 text-sm">';
-                
                 // 숨겨진 열의 개수에 맞게 레이아웃 조정
                 const numHiddenCols = hiddenData.length;
                 let gridClass = 'grid-cols-1';
-                // 숨겨진 열이 4개 이상이면 4열, 3개면 3열, 2개면 2열
                 if (numHiddenCols >= 4) gridClass = 'lg:grid-cols-4';
                 else if (numHiddenCols === 3) gridClass = 'lg:grid-cols-3';
                 else if (numHiddenCols === 2) gridClass = 'sm:grid-cols-2';
                 
-                detailsHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-x-8 gap-y-2 text-sm">`;
+                let detailsHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-x-8 gap-y-2 text-sm">`;
 
                 for (let j = 0; j < hiddenData.length; j++) {
                     detailsHTML += `<div><span class="font-semibold text-gray-400">${hiddenHeaders[j] || 'N/A'}:</span> <span class="text-white">${hiddenData[j] || 'N/A'}</span></div>`;
@@ -467,11 +585,9 @@
 
                 mainRow.addEventListener('click', () => {
                     const wasHidden = detailsRow.classList.contains('hidden');
-                    // 모든 확장된 행을 숨깁니다.
                     tbody.querySelectorAll('.details-row').forEach(row => {
                         row.classList.add('hidden');
                     });
-                    // 클릭된 행의 상세 정보를 토글합니다.
                     if(wasHidden) {
                        detailsRow.classList.remove('hidden');
                     }
