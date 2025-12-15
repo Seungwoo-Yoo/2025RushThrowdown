@@ -13,71 +13,33 @@
         .loader { border: 4px solid #4b5563; border-top: 4px solid #facc15; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .details-row.hidden, #wod-content.hidden { display: none; }
-        /* 💡 하이라이트 클래스: Emerald 500 (#10b981) 배경, 굵게(700) 처리 */
-        .highlight {
-            background-color: #10b981 !important; /* Emerald 500 */
-            color: #ffffff !important;
-            font-weight: 700 !important;
-        }
-
-        /* 🏆 메달 테두리 스타일 */
+        
+        /* 💡 하이라이트 및 랭킹 스타일 */
+        .highlight { background-color: #10b981 !important; color: #ffffff !important; font-weight: 700 !important; }
         .border-gold { border-left: 4px solid #FFD700; }
         .border-silver { border-left: 4px solid #C0C0C0; }
         .border-bronze { border-left: 4px solid #CD7F32; }
         
-        /* 이미지 스타일 */
+        /* 팀 아이콘 스타일 */
         .team-icon {
-            width: 24px; /* 이미지 크기 조정 */
-            height: 24px;
-            border-radius: 50%; /* 원형 이미지 */
-            object-fit: cover;
-            margin-left: 6px; /* 팀 이름 텍스트 뒤에 간격 추가 */
-            vertical-align: middle;
-            display: inline-block;
+            width: 24px; height: 24px; border-radius: 50%; object-fit: cover;
+            margin-left: 6px; vertical-align: middle; display: inline-block;
+        }
 
-            /* 🎨 Total 탭 전용 스타일 (이미지 오버레이) */
+        /* 🎨 Total 탭 전용 스타일 (이미지 배경 + 테이블 위치) */
         .total-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 600px; /* 포스터 최대 너비 */
-            margin: 0 auto;
+            position: relative; width: 100%; max-width: 600px; margin: 0 auto;
+            border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        .total-poster-img {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .total-overlay-table {
+        .total-bg-image { width: 100%; display: block; }
+        .total-table-container {
             position: absolute;
-            /* 💡 아래 수치는 이미지를 보고 대략 맞춘 위치입니다. 어긋나면 여기서 %를 조절하세요 */
-            bottom: 5%;      /* 아래에서 5% 떨어짐 */
-            left: 10%;       /* 왼쪽에서 10% 떨어짐 */
-            width: 80%;      /* 너비는 전체의 80% */
-            height: 33%;     /* 높이는 전체의 약 33% (검은 박스 영역) */
-            
-            overflow-y: auto; /* 내용이 많으면 스크롤 */
-            font-family: 'Noto Sans KR', sans-serif;
+            /* 💡 포스터 위 테이블 위치 조정 (필요시 여기 숫자 변경) */
+            bottom: 8%; left: 10%; width: 80%; height: 40%;
+            overflow-y: auto; background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px; padding: 5px;
         }
-        /* 스크롤바 숨기기 (깔끔하게) */
-        .total-overlay-table::-webkit-scrollbar { display: none; }
-        
-        .overlay-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #fff;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-        }
-        .overlay-rank { width: 15%; text-align: left; }
-        .overlay-team { width: 55%; text-align: left; display: flex; align-items: center; }
-        .overlay-score { width: 30%; text-align: right; color: #facc15; font-weight: 800; }
-        }
+        .total-table-container::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -85,19 +47,17 @@
         <header class="text-center mb-8">
             <h1 class="text-3xl sm:text-4xl font-bold text-yellow-300 mb-2">2025 Rush Throwdown Leader Board</h1>
             <h2 class="text-xl sm:text-2xl font-semibold text-white mb-4">ELITE DIVISION</h2>
-            <p class="text-md sm:text-lg text-gray-400">
-                대회 실시간 순위 정보 (리더보드 에러뜨면 바로와서 말해주세요 ><)
-            </p>
+            <p class="text-md sm:text-lg text-gray-400">대회 실시간 순위 정보</p>
         </header>
 
         <div class="border-b border-gray-700 mb-4">
             <nav class="-mb-px flex flex-wrap justify-center space-x-2 sm:space-x-4" aria-label="Tabs">
-                <button data-tab="event1" class="tab active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 1</button>
+                <button data-tab="event1" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 1</button>
                 <button data-tab="event2" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 2</button>
                 <button data-tab="event3" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 3</button>
                 <button data-tab="event4" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">EVENT 4</button>
                 <button data-tab="timetable" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">TIMETABLE</button>
-                <button data-tab="total" class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">TOTAL</button>
+                <button data-tab="total" class="tab activae whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base border-transparent text-gray-400 hover:text-white hover:border-gray-300">TOTAL</button>
             </nav>
         </div>
 
@@ -106,11 +66,8 @@
         </div>
 
         <div id="wod-section" class="my-6 text-center">
-            <button id="wod-toggle-button" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors duration-200">
-                WOD DETAILS
-            </button>
-            <div id="wod-content" class="hidden mt-4 p-4 bg-gray-800 rounded-lg text-left whitespace-pre-wrap max-w-2xl mx-auto">
-            </div>
+            <button id="wod-toggle-button" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors duration-200">WOD DETAILS</button>
+            <div id="wod-content" class="hidden mt-4 p-4 bg-gray-800 rounded-lg text-left whitespace-pre-wrap max-w-2xl mx-auto"></div>
         </div>
 
         <div id="status" class="h-8 flex items-center justify-center text-sm text-gray-400 mb-4"></div>
@@ -121,78 +78,49 @@
         // --- ⚠️ 주최자 설정 부분 ⚠️ ---
         const API_KEY = 'AIzaSyDVAAXL9Tfcqq_7RsKIVhjBZgboDCved5g'; 
         const SPREADSHEET_ID = '1rXpKUIl2ioWWeMwtlmj-CR_6LoHYQuuP7k7GDRgd3WQ'; 
+        
+        // 🖼️ 포스터 이미지 URL (깃허브 이미지 주소로 꼭 교체!)
+        const TOTAL_POSTER_URL = "https://raw.githubusercontent.com/Seungwoo-Yoo/2025RushThrowdown/main/images/total_poster.png";
 
-        // Event 3/4는 총 10열 (0~9). 
-        // 표시 열: 1열(0), 3열(2), 5열(4), 7열(6) -> visibleCols = 4
         const SHEET_DATA_MAP = {
-            event1: {
-                Elite: { range: "'결과지'!A3:C6", type: 'standard', wodRange: "'결과지'!A100" },
-            },
-            event2: {
-                Elite: { range: "'결과지'!F3:L26", type: 'expandable', visibleCols: 4, wodRange: "'결과지'!B100" },
-            },
-            // Event 3: 특수 랭킹 처리 테이블
-            event3: {
-                Elite: { range: "'결과지'!N3:W16", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!C100" },
-            },
-            // Event 4: 특수 랭킹 처리 테이블
-            event4: {
-                Elite: { range: "'결과지'!N21:W26", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!D100" },
-            },
-            timetable: {
-                Elite: { 
-                    range: "'timetable'!A1:F25", 
-                    type: 'timetable', 
-                    wodRange: null,
-                    highlightRange: "'timetable'!G1" 
-                },
-            },
-            total: {
+            event1: { Elite: { range: "'결과지'!A3:C6", type: 'standard', wodRange: "'결과지'!A100" } },
+            event2: { Elite: { range: "'결과지'!F3:L26", type: 'expandable', visibleCols: 4, wodRange: "'결과지'!B100" } },
+            event3: { Elite: { range: "'결과지'!N3:W16", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!C100" } },
+            event4: { Elite: { range: "'결과지'!N21:W26", type: 'expandable_ranked', visibleCols: 4, wodRange: "'결과지'!D100" } },
+            timetable: { Elite: { range: "'timetable'!A1:F25", type: 'timetable', wodRange: null, highlightRange: "'timetable'!G1" } },
+            total: { 
                 Elite: { 
                     range: "'결과지'!A40:G43", 
-                    type: 'expandable', 
-                    visibleCols: 3,
+                    type: 'total_special', // Total 탭은 특별 처리
+                    visibleCols: 3, 
                     hideSwitchRange: "'Settings'!B1" 
-                },
+                } 
             },
         };
-        // ------------------------------------
         
-        // --- 🖼️ 팀 이미지 매핑 설정 (필수 수정 구간) 🖼️ ---
+        // 팀 이미지 설정
         const TEAM_IMAGE_MAP = {
             "Team Adam": "https://raw.githubusercontent.com/Seungwoo-Yoo/2025RushThrowdown/main/images/adam.png",
             "Team Stone": "https://raw.githubusercontent.com/Seungwoo-Yoo/2025RushThrowdown/main/images/Stone.png",
             "Team Yeonking": "https://raw.githubusercontent.com/Seungwoo-Yoo/2025RushThrowdown/main/images/yeonking.png",
         };
         
-        // 팀 이름에 해당하는 이미지 HTML을 반환하는 헬퍼 함수
         const getTeamImageHtml = (teamName) => {
             const url = TEAM_IMAGE_MAP[teamName.trim()];
-            if (url) {
-                // 이미지 URL이 있다면 <img> 태그 반환
-                return `<img src="${url}" alt="${teamName} icon" class="team-icon">`;
-            }
-            return '';
+            return url ? `<img src="${url}" alt="${teamName} icon" class="team-icon">` : '';
         };
-        // ----------------------------------------------------
 
         const tableContainer = document.getElementById('tableContainer');
         const statusDiv = document.getElementById('status');
-        const divisionTabsContainer = document.getElementById('division-tabs');
         const wodSection = document.getElementById('wod-section');
         const wodToggleButton = document.getElementById('wod-toggle-button');
         const wodContent = document.getElementById('wod-content');
         const REFRESH_INTERVAL = 15000;
-
-        let currentEvent = 'event1';
+        let currentEvent = 'total';
         let currentDivision = 'Elite';
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (!API_KEY || API_KEY === '여기에_API_키를_붙여넣으세요' || !SPREADSHEET_ID || SPREADSHEET_ID === '여기에_스프레드시트_ID를_붙여넣으세요') {
-                displayError('⚠️ 주최자 확인 필요: HTML 파일 내에 API 키와 스프레드시트 ID를 설정해주세요.');
-                return;
-            }
-            
+            if (!API_KEY || API_KEY.length < 10) { displayError('⚠️ API 키 확인 필요'); return; }
             initializeTabs();
             fetchAndDisplayData();
             setInterval(fetchAndDisplayData, REFRESH_INTERVAL);
@@ -200,695 +128,346 @@
 
         function initializeTabs() {
             const mainTabs = document.querySelectorAll('button[data-tab]');
-
             mainTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     currentEvent = tab.dataset.tab;
-                    
-                    if (currentEvent === 'timetable' || currentEvent === 'total') {
-                        wodSection.style.display = 'none';
-                    } else {
-                        wodSection.style.display = 'block';
-                    }
-
+                    wodSection.style.display = (currentEvent === 'timetable' || currentEvent === 'total') ? 'none' : 'block';
                     wodContent.classList.add('hidden'); 
-                    updateActiveTabs(mainTabs, tab);
+                    mainTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
                     fetchAndDisplayData();
                 });
             });
-            wodToggleButton.addEventListener('click', () => {
-                wodContent.classList.toggle('hidden');
-            });
-            
-            wodSection.style.display = 'block';
-        }
-
-        function updateActiveTabs(tabs, activeTab, isDivision = false) {
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-                if (isDivision) {
-                    tab.classList.remove('bg-gray-700/50', 'text-white');
-                    tab.classList.add('bg-gray-800', 'text-gray-300');
-                }
-            });
-            activeTab.classList.add('active');
-            if (isDivision) {
-                activeTab.classList.add('bg-gray-700/50', 'text-white');
-                activeTab.classList.remove('bg-gray-800', 'text-gray-300');
-            }
+            wodToggleButton.addEventListener('click', () => wodContent.classList.toggle('hidden'));
         }
 
         async function fetchAndDisplayData() {
             showLoading();
-            const config = SHEET_DATA_MAP[currentEvent] ? SHEET_DATA_MAP[currentEvent][currentDivision] : null; 
-            
-            if (!config || !config.range) {
-                if (currentEvent !== 'timetable' && currentEvent !== 'total') {
-                    displayError('설정 오류: 현재 탭의 시트 정보가 없습니다. SHEET_DATA_MAP을 확인하세요.');
-                }
-            }
-            
+            const config = SHEET_DATA_MAP[currentEvent]?.Elite;
+            if (!config) return;
+
+            // Total 숨김 처리
             if (currentEvent === 'total' && config.hideSwitchRange) {
                 try {
-                    const hideSwitchResult = await fetchData(config.hideSwitchRange);
-                    if (hideSwitchResult && hideSwitchResult[0] && hideSwitchResult[0][0] && hideSwitchResult[0][0].toLowerCase() === 'o') {
-                        displayAnnouncement("시상식때 공개 됩니다!");
-                        return; 
-                    }
-                } catch (error) {
-                    console.error('숨김 스위치 확인 오류:', error);
-                }
+                    const hideRes = await fetchData(config.hideSwitchRange);
+                    if (hideRes?.[0]?.[0]?.toLowerCase() === 'o') { displayAnnouncement("시상식때 공개 됩니다!"); return; }
+                } catch (e) { console.error(e); }
             }
-            
-            const leaderboardPromise = fetchData(config.range);
-            const wodPromise = (currentEvent !== 'timetable' && currentEvent !== 'total' && config.wodRange) ? fetchData(config.wodRange) : Promise.resolve(null);
-            
-            const highlightPromise = (currentEvent === 'timetable' && config.highlightRange) ? fetchData(config.highlightRange) : Promise.resolve(null);
-
 
             try {
-                const [leaderboardResult, wodResult, highlightResult] = await Promise.all([leaderboardPromise, wodPromise, highlightPromise]);
+                const [data, wodData, hlData] = await Promise.all([
+                    fetchData(config.range),
+                    config.wodRange ? fetchData(config.wodRange) : null,
+                    config.highlightRange ? fetchData(config.highlightRange) : null
+                ]);
 
-                if (leaderboardResult) {
-                    if (currentEvent === 'timetable') {
-                        let highlightRowNumber = null;
-                        if (highlightResult && highlightResult[0] && highlightResult[0][0]) {
-                            highlightRowNumber = parseInt(highlightResult[0][0].trim()); 
-                            if (isNaN(highlightRowNumber)) highlightRowNumber = null;
-                        }
-                        renderTimetable(leaderboardResult, highlightRowNumber);
+                if (data) {
+                    if (config.type === 'timetable') {
+                        let hlRow = hlData?.[0]?.[0] ? parseInt(hlData[0][0]) : null;
+                        renderTimetable(data, hlRow);
                     } else {
-                        renderTable(leaderboardResult, config);
+                        renderTable(data, config);
                     }
-                    
-                } else {
-                    displayError('선택된 탭에 데이터가 없습니다. 시트 이름과 범위를 확인해주세요.');
-                }
-                
-                if (currentEvent !== 'timetable' && currentEvent !== 'total') {
-                    if (wodResult && wodResult.length > 0 && wodResult[0][0]) {
-                        wodSection.style.display = 'block';
-                        wodContent.textContent = wodResult[0][0];
-                    } else {
-                        wodSection.style.display = 'block';
-                    }
-                }
+                } else displayError('데이터 없음');
 
-                updateStatus(`마지막 업데이트: ${new Date().toLocaleTimeString()}`);
-
-            } catch(error) {
-                console.error('Fetching error:', error);
-                displayError(`데이터 로딩 오류: ${error.message}`);
-            }
+                if (wodData?.[0]?.[0]) wodContent.textContent = wodData[0][0];
+                updateStatus(`업데이트: ${new Date().toLocaleTimeString()}`);
+            } catch(error) { displayError(`오류: ${error.message}`); }
         }
         
         async function fetchData(range) {
-            const encodedRange = encodeURIComponent(range);
-            const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodedRange}?key=${API_KEY}`;
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-            if (!response.ok) {
-                const errorMessage = data.error?.message || `HTTP error! status: ${response.status}`;
-                throw new Error(errorMessage);
-            }
+            const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error?.message);
             return data.values || null;
         }
 
-
-// ----------------------------------------------------
-        // 🖼️ 포스터 이미지 URL (생성한 이미지를 깃허브나 어딘가에 올리고 주소를 여기에 넣으세요!)
-        // 예시로 임시 이미지를 넣어둡니다.
-        const TOTAL_POSTER_URL = "https://raw.githubusercontent.com/Seungwoo-Yoo/2025RushThrowdown/main/images/coach.png"; 
-        // 👆 위 주소를 방금 만든 포스터 이미지 주소로 꼭 바꿔주세요!
-        // ----------------------------------------------------
-
+        // --- ⚙️ 메인 렌더링 스위치 ---
         function renderTable(data, config) {
-            // 💡 [변경됨] Total 탭일 경우 특수 렌더링 함수 호출
-            if (currentEvent === 'total') {
-                renderTotalSpecial(data, config);
-                return;
-            }
-
-            if (config.type === 'expandable_ranked') {
+            if (config.type === 'total_special') {
+                renderTotalSpecial(data, config.visibleCols);
+            } else if (config.type === 'expandable_ranked') {
                 renderExpandableRankedTable(data, config.visibleCols);
             } else if (config.type === 'expandable') {
                 renderExpandableTable(data, config.visibleCols);
-            } else if (config.type === 'timetable') {
-                renderTimetable(data, null); 
             } else {
                 renderStandardTable(data);
             }
         }
 
-        // 🏆 [새로 추가됨] Total 탭 전용: 이미지 위에 표 띄우기
-        function renderTotalSpecial(data, config) {
+        // 🏆 [최종 완성] 2열 여백을 살짝(pl-3) 줘서 답답함 해소!
+        function renderTotalSpecial(data, visibleCols) {
             tableContainer.innerHTML = '';
-
-            // 1. 데이터 유효성 검사
-            if (!data || data.length === 0 || data[0].length === 0) {
-                displayError('데이터가 없습니다.');
-                return;
-            }
-
-            // 2. 전체 래퍼 생성
-            const wrapper = document.createElement('div');
-            wrapper.className = 'total-wrapper';
-
-            // 3. 배경 포스터 이미지 생성
-            const img = document.createElement('img');
-            img.src = TOTAL_POSTER_URL; 
-            img.alt = "2025 Rush Throwdown Poster";
-            img.className = 'total-poster-img';
-            wrapper.appendChild(img);
-
-            // 4. 오버레이 테이블 컨테이너 생성
-            const overlayDiv = document.createElement('div');
-            overlayDiv.className = 'total-overlay-table';
-
-            // 5. 데이터 파싱 및 행 생성 (1행부터 데이터라고 가정)
-            // 데이터 구조: [Rank, Team Name, ... Score(마지막 열이나 특정 열)]
-            // *주의*: Total 시트의 열 순서에 따라 인덱스([0], [1] 등)를 맞춰야 합니다.
-            // 현재 코드 기준: 0열=Rank, 1열=Team Name, 맨 뒤=Total Score라고 가정하고 작성함.
             
+            const wrapper = document.createElement('div'); wrapper.className = 'total-wrapper';
+            const img = document.createElement('img'); img.src = TOTAL_POSTER_URL; img.className = 'total-bg-image';
+            const tableBox = document.createElement('div'); tableBox.className = 'total-table-container';
+
+            const table = document.createElement('table');
+            table.className = "min-w-full divide-y divide-gray-600 table-fixed";
+            const tbody = document.createElement('tbody');
+
+            const allHeaders = data[0];
+
             for (let i = 1; i < data.length; i++) {
                 const rowData = data[i];
-                if (!rowData.some(cell => cell && cell.trim() !== '')) continue;
+                if (!rowData.some(c => c && c.trim() !== '')) continue;
 
-                // 데이터 추출 (시트 구조에 맞춰 수정 필요할 수 있음)
                 const rank = rowData[0] || '-';
                 const teamName = rowData[1] || 'Team';
-                const totalScore = rowData[config.visibleCols - 1] || rowData[rowData.length-1] || '0'; // 표시되는 마지막 열을 점수로 가정
+                const score = rowData[2] || '0';
 
-                // 행(Row) HTML 생성
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'overlay-row';
+                const tr = document.createElement('tr');
+                tr.className = "cursor-pointer hover:bg-white/10 border-b border-gray-700/50";
+                
+                let rankIcon = rank;
+                if(rank=='1') rankIcon='🥇'; else if(rank=='2') rankIcon='🥈'; else if(rank=='3') rankIcon='🥉';
+                
+                const teamImgTag = getTeamImageHtml(teamName);
 
-                // 🥇 1,2,3등 아이콘
-                let rankDisplay = rank;
-                if (rank == '1') rankDisplay = '🥇';
-                else if (rank == '2') rankDisplay = '🥈';
-                else if (rank == '3') rankDisplay = '🥉';
-
-                // 팀 아이콘 가져오기
-                const teamImgHtml = getTeamImageHtml(teamName);
-
-                rowDiv.innerHTML = `
-                    <div class="overlay-rank">${rankDisplay}</div>
-                    <div class="overlay-team">
-                        ${teamName}
-                        ${teamImgHtml}
-                    </div>
-                    <div class="overlay-score">${totalScore} PTS</div>
+                tr.innerHTML = `
+                    <td class="py-2 sm:py-3 text-center font-bold text-white w-[12%] p-0" 
+                        style="font-size: clamp(12px, 3.5vw, 20px);">
+                        ${rankIcon}
+                    </td>
+                    
+                    <td class="py-2 sm:py-3 text-gray-200 w-[68%] pl-10 sm:pl-12 whitespace-nowrap" 
+                        style="font-size: clamp(11px, 3.5vw, 18px);">
+                        
+                        <div class="flex items-center gap-0.5 sm:gap-2">
+                            <span class="font-medium tracking-tighter sm:tracking-normal">
+                                ${teamName}
+                            </span>
+                            <span class="flex-shrink-0">
+                                ${teamImgTag}
+                            </span>
+                        </div>
+                    </td>
+                    
+                    <td class="py-2 sm:py-3 text-right font-extrabold text-yellow-400 w-[20%] pr-2 sm:pr-4" 
+                        style="font-size: clamp(11px, 3.5vw, 20px);">
+                        ${score}<span class="text-[0.7em] font-normal text-gray-400 ml-0.5">PTS</span>
+                    </td>
                 `;
 
-                overlayDiv.appendChild(rowDiv);
-            }
+                // 상세 정보 (숨김)
+                const detailsRow = document.createElement('tr'); detailsRow.className = "hidden details-row bg-black/70";
+                const detailsCell = document.createElement('td'); detailsCell.colSpan = 3; detailsCell.className = "p-3 sm:p-4 text-gray-300";
+                
+                let detailsHTML = '<ul class="space-y-1 sm:space-y-2" style="font-size: clamp(11px, 3vw, 16px);">';
+                for(let k=3; k<rowData.length; k++) {
+                    const header = allHeaders[k] || `Detail ${k}`;
+                    const val = rowData[k] || '-';
+                    detailsHTML += `<li><span class="text-gray-500 font-medium">${header}:</span> <span class="text-white ml-2">${val}</span></li>`;
+                }
+                detailsHTML += '</ul>';
+                detailsCell.innerHTML = detailsHTML;
+                detailsRow.appendChild(detailsCell);
 
-            wrapper.appendChild(overlayDiv);
-            tableContainer.appendChild(wrapper);
+                tr.addEventListener('click', () => {
+                    const isHidden = detailsRow.classList.contains('hidden');
+                    tbody.querySelectorAll('.details-row').forEach(r => r.classList.add('hidden'));
+                    if(isHidden) {
+                        detailsRow.classList.remove('hidden');
+                        setTimeout(() => {
+                            detailsRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }, 100);
+                    }
+                });
+                tbody.append(tr, detailsRow);
+            }
+            table.appendChild(tbody); tableBox.appendChild(table); wrapper.append(img, tableBox); tableContainer.appendChild(wrapper);
         }
-        
-        // --- 💡 Event 3/4를 위한 특수 랭킹 처리 함수 ---
+
+        // 2. Expandable Ranked (Event 3, 4)
         function renderExpandableRankedTable(data, visibleCols) {
             tableContainer.innerHTML = '';
-            const table = document.createElement('table');
-            table.className = "min-w-full divide-y divide-gray-700";
-            
-            const thead = document.createElement('thead');
-            thead.className = "bg-gray-800";
+            const table = document.createElement('table'); table.className = "min-w-full divide-y divide-gray-700";
+            const thead = document.createElement('thead'); thead.className = "bg-gray-800";
             const headerRow = document.createElement('tr');
             
-            if (!data || data.length === 0 || data[0].length === 0) {
-                displayError('점수판 데이터가 비어있습니다. 시트 범위를 확인하세요.');
-                return;
-            }
-            
+            if (!data || !data.length) return;
             const allHeaders = data[0];
-            
-            // 표시될 인덱스: 1열(0), 3열(2), 5열(4), 7열(6)
-            const finalVisibleIndices = [0, 2, 4, 6].slice(0, visibleCols); 
-            const finalVisibleHeaders = finalVisibleIndices.map(i => allHeaders[i]);
-            
-            // 랭킹 데이터 인덱스 (숨겨짐, 테두리 결정용): 2열(1), 4열(3), 6열(5)
+            const finalVisibleIndices = [0, 2, 4, 6].slice(0, visibleCols);
             const rankIndices = [1, 3, 5]; 
-            // 상세 정보 인덱스 (숨겨짐): 8열(7), 9열(8), 10열(9) 
-            const detailIndices = [7, 8, 9]; 
-            // 테두리를 적용할 표시 열의 인덱스 (팀 수행 이름, Score 1, Score 2)
             const borderColIndices = [1, 2, 3]; 
 
-            // 순위에 따라 클래스를 반환하는 헬퍼 함수
-            const getRankClass = (rank) => {
-                const r = parseInt(rank);
-                if (r === 1) return 'border-gold';
-                if (r === 2) return 'border-silver';
-                if (r === 3) return 'border-bronze';
-                return '';
-            };
-            
-            // 순위에 따라 이모지를 반환하는 헬퍼 함수
-            const getRankEmoji = (rank) => {
-                const r = parseInt(rank);
-                if (r === 1) return '🥇 ';
-                if (r === 2) return '🥈 ';
-                if (r === 3) return '🥉 ';
-                return '';
-            };
-
-
-            finalVisibleHeaders.forEach(headerText => {
-                const th = document.createElement('th');
-                th.scope = "col";
-                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
-                
-                let content = headerText;
-                
-                // 💡 헤더에 팀 이미지 삽입 (Event 3/4)
-                const teamImageHtml = getTeamImageHtml(headerText);
-                if (teamImageHtml) {
-                    // 헤더 텍스트 뒤에 이미지 삽입
-                    content = `${headerText} ${teamImageHtml}`;
-                    th.innerHTML = content;
-                } else {
-                    th.textContent = headerText;
-                }
-                
+            finalVisibleIndices.forEach(i => {
+                const th = document.createElement('th'); th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
+                let content = allHeaders[i];
+                const imgHtml = getTeamImageHtml(content);
+                th.innerHTML = imgHtml ? `${content} ${imgHtml}` : content;
                 headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
 
-            const tbody = document.createElement('tbody');
-            tbody.className = "divide-y divide-gray-800";
-            
+            const tbody = document.createElement('tbody'); tbody.className = "divide-y divide-gray-800";
             for (let i = 1; i < data.length; i++) {
-                const fullRowData = data[i];
-                if (!fullRowData || !fullRowData.some(cell => cell && cell.trim() !== '')) continue;
-
-                // 랭킹 정보를 추출 및 클래스 배열 준비
-                const rankClasses = [];
-                rankIndices.forEach(index => {
-                    const rank = fullRowData[index];
-                    rankClasses.push(getRankClass(rank));
-                });
+                const row = data[i];
+                if (!row.some(c => c && c.trim() !== '')) continue;
                 
-                const mainRow = document.createElement('tr');
-                const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
-                
-                // 표시될 데이터만 추출
-                const visibleData = finalVisibleIndices.map(index => fullRowData[index]); 
+                const tr = document.createElement('tr');
+                tr.className = `${(i%2===0)?'bg-white/5':'bg-transparent'} cursor-pointer hover:bg-white/10`;
 
-                visibleData.forEach((cellText, colIndex) => {
-                    const td = document.createElement('td');
-                    td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
-                    let content = cellText || '';
+                finalVisibleIndices.forEach((idx, colIndex) => {
+                    const td = document.createElement('td'); td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
+                    let content = row[idx] || '';
                     
-                    // 🚨 테두리 및 이모지 적용
-                    const borderIndex = borderColIndices.indexOf(colIndex); // 1, 2, 3 중 해당하는지 확인
-                    if (borderIndex !== -1 && borderIndex < rankIndices.length) { 
-                        const rank = fullRowData[rankIndices[borderIndex]] || '';
-                        const rankClass = getRankClass(rank);
-                        const rankEmoji = getRankEmoji(rank);
-                        
-                        // 1. 테두리 적용
-                        if (rankClass !== '') {
-                            td.classList.add(rankClass);
-                        }
-                        
-                        // 2. 이모지 추가 (앞에 유지)
-                        content = rankEmoji + content;
+                    const borderIdx = borderColIndices.indexOf(colIndex);
+                    if (borderIdx !== -1 && borderIdx < rankIndices.length) {
+                        const rank = row[rankIndices[borderIdx]];
+                        if(rank=='1') { td.classList.add('border-gold'); content = '🥇 '+content; }
+                        else if(rank=='2') { td.classList.add('border-silver'); content = '🥈 '+content; }
+                        else if(rank=='3') { td.classList.add('border-bronze'); content = '🥉 '+content; }
                     }
-
-                    td.textContent = content;
-                    mainRow.appendChild(td);
+                    td.textContent = content; tr.appendChild(td);
                 });
 
-                // --- 상세 정보 행 구성 (랭킹 데이터 삭제) ---
-                const detailsRow = document.createElement('tr');
-                detailsRow.className = "hidden details-row";
-                const detailsCell = document.createElement('td');
-                detailsCell.colSpan = visibleCols;
-                detailsCell.className = "p-0";
-                
-                const detailsContainer = document.createElement('div');
-                detailsContainer.className = "bg-gray-800 p-4 text-left";
-                
-                // 🚨 헤더: '팀 수행 이름 상세 정보'
-                let detailsHTML = '<div class="text-sm font-semibold text-white mb-2">팀 수행 이름 상세 정보</div>';
-                detailsHTML += '<ul class="list-disc list-inside space-y-1 text-sm">';
-                
-                // 1. 숨겨진 랭킹 데이터는 출력하지 않음
-                
-                // 2. 확장 정보 (8, 9, 10열 - 인덱스 7, 8, 9) 출력
-                detailIndices.forEach(index => {
-                    const header = allHeaders[index] || `Detail ${index + 1}`;
-                    const data = fullRowData[index] || 'N/A';
-                    detailsHTML += `<li><span class="font-semibold text-gray-400">${header}:</span> <span class="text-white">${data}</span></li>`;
+                // 상세 정보
+                const dRow = document.createElement('tr'); dRow.className = "hidden details-row";
+                const dCell = document.createElement('td'); dCell.colSpan = visibleCols; dCell.className = "p-0";
+                const dDiv = document.createElement('div'); dDiv.className = "bg-gray-800 p-4 text-left text-sm";
+                let dHtml = '<div class="font-semibold text-white mb-2">상세 정보</div><ul class="list-disc list-inside space-y-1">';
+                [7, 8, 9].forEach(k => {
+                    if(allHeaders[k]) dHtml += `<li><span class="font-semibold text-gray-400">${allHeaders[k]}:</span> <span class="text-white">${row[k]||'N/A'}</span></li>`;
                 });
-
-                detailsHTML += '</ul>';
-
-                detailsContainer.innerHTML = detailsHTML;
-                detailsCell.appendChild(detailsContainer);
-                detailsRow.appendChild(detailsCell);
+                dHtml += '</ul>'; dDiv.innerHTML = dHtml; dCell.appendChild(dDiv); dRow.appendChild(dCell);
                 
-                tbody.appendChild(mainRow);
-                tbody.appendChild(detailsRow);
-
-                mainRow.addEventListener('click', () => {
-                    const wasHidden = detailsRow.classList.contains('hidden');
-                    tbody.querySelectorAll('.details-row').forEach(row => {
-                        row.classList.add('hidden');
-                    });
-                    if(wasHidden) {
-                       detailsRow.classList.remove('hidden');
-                    }
+                tr.addEventListener('click', () => {
+                    const isHidden = dRow.classList.contains('hidden');
+                    tbody.querySelectorAll('.details-row').forEach(r => r.classList.add('hidden'));
+                    if(isHidden) dRow.classList.remove('hidden');
                 });
+                tbody.append(tr, dRow);
             }
-            table.append(thead, tbody);
-            tableContainer.appendChild(table);
+            table.append(thead, tbody); tableContainer.appendChild(table);
         }
-        // --- End of renderExpandableRankedTable ---
 
+        // 3. Expandable (Event 2)
+        function renderExpandableTable(data, visibleCols) {
+            tableContainer.innerHTML = '';
+            const table = document.createElement('table'); table.className = "min-w-full divide-y divide-gray-700";
+            const thead = document.createElement('thead'); thead.className = "bg-gray-800";
+            const hRow = document.createElement('tr');
+            
+            if(!data || !data.length) return;
+            const headers = data[0].slice(0, visibleCols);
+            headers.forEach(h => {
+                const th = document.createElement('th'); th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
+                th.innerHTML = (currentEvent==='event2') ? `${h} ${getTeamImageHtml(h)}` : h;
+                hRow.appendChild(th);
+            });
+            thead.appendChild(hRow);
 
+            const tbody = document.createElement('tbody'); tbody.className = "divide-y divide-gray-800";
+            for(let i=1; i<data.length; i++) {
+                const row = data[i]; if(!row.some(c=>c&&c.trim())) continue;
+                const tr = document.createElement('tr'); tr.className = `${(i%2===0)?'bg-white/5':'bg-transparent'} cursor-pointer hover:bg-white/10`;
+                
+                row.slice(0, visibleCols).forEach((cell, idx) => {
+                    const td = document.createElement('td'); 
+                    let cls = "px-4 py-4 text-sm text-center text-gray-300";
+                    let txt = cell || '';
+                    if (idx===0 && txt.includes('+')) { txt = txt.replace(/\s\+\s/g, '<br>+ '); cls+=" whitespace-normal"; }
+                    else if (txt.includes('(')) {
+                        const cut = txt.indexOf('(');
+                        txt = `${txt.substring(0, cut)} <span class="whitespace-normal break-words">${txt.substring(cut)}</span>`;
+                        cls+=" whitespace-normal break-words";
+                    } else { cls+=" whitespace-nowrap"; }
+                    td.className = cls; td.innerHTML = txt; tr.appendChild(td);
+                });
+
+                // 상세 정보
+                const dRow = document.createElement('tr'); dRow.className="hidden details-row";
+                const dCell = document.createElement('td'); dCell.colSpan=visibleCols; dCell.className="p-0";
+                const dDiv = document.createElement('div'); dDiv.className="bg-gray-800 p-4 text-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
+                
+                let dHtml = '';
+                for(let k=visibleCols; k<row.length; k++) {
+                    dHtml += `<div><span class="font-semibold text-gray-400">${data[0][k]}:</span> <span class="text-white">${row[k]||'N/A'}</span></div>`;
+                }
+                dDiv.innerHTML = dHtml; dCell.appendChild(dDiv); dRow.appendChild(dCell);
+                
+                tr.addEventListener('click', () => {
+                    const isHidden = dRow.classList.contains('hidden');
+                    tbody.querySelectorAll('.details-row').forEach(r => r.classList.add('hidden'));
+                    if(isHidden) dRow.classList.remove('hidden');
+                });
+                tbody.append(tr, dRow);
+            }
+            table.append(thead, tbody); tableContainer.appendChild(table);
+        }
+
+        // 4. Timetable
         function renderTimetable(data, highlightRowNumber) {
             tableContainer.innerHTML = '';
-            const table = document.createElement('table');
-            table.className = "min-w-full divide-y divide-gray-700 table-fixed";
-            
-            const thead = document.createElement('thead');
-            thead.className = "bg-gray-800";
-            const headerRow = document.createElement('tr');
-            
-            if (!data || data.length === 0 || data[0].length === 0) {
-                displayError('시간표 데이터가 비어있습니다. 시트 범위를 확인하세요.');
-                return;
-            }
-            data[0].forEach(headerText => {
-                const th = document.createElement('th');
-                th.scope = "col";
-                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
-                th.textContent = headerText;
-                headerRow.appendChild(th);
+            const table = document.createElement('table'); table.className = "min-w-full divide-y divide-gray-700 table-fixed";
+            const thead = document.createElement('thead'); thead.className = "bg-gray-800";
+            const hRow = document.createElement('tr');
+            if(!data || !data.length) return;
+            data[0].forEach(h => {
+                const th = document.createElement('th'); th.className="py-3.5 px-4 text-center text-sm font-semibold text-white"; th.textContent=h; hRow.appendChild(th);
             });
-            thead.appendChild(headerRow);
+            thead.appendChild(hRow);
 
-            const tbody = document.createElement('tbody');
-            tbody.className = "divide-y divide-gray-800";
-            for (let i = 1; i < data.length; i++) {
-                const rowData = data[i];
-                const isHighlighted = (i === highlightRowNumber); 
+            const tbody = document.createElement('tbody'); tbody.className = "divide-y divide-gray-800";
+            for(let i=1; i<data.length; i++) {
+                const row = data[i]; if(!row.some(c=>c&&c.trim())) continue;
+                const tr = document.createElement('tr');
+                const isHl = (i===highlightRowNumber);
+                tr.className = `${(i%2===0)?'bg-white/5':'bg-transparent'} hover:bg-white/10 ${isHl?'highlight':''}`;
                 
-                if (rowData.some(cell => cell && cell.trim() !== '')) { 
-                    const tr = document.createElement('tr');
-                    let bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                    tr.className = `${bgColor} hover:bg-white/10 ${isHighlighted ? 'highlight' : ''}`;
-                    
-                    rowData.forEach((cellText, colIndex) => {
-                        const td = document.createElement('td');
-                        const textColor = isHighlighted ? 'text-white' : 'text-gray-300';
-                        td.className = `px-2 py-4 text-sm text-center ${textColor} break-words`;
-                        
-                        let content = cellText || '';
-                        if (colIndex === 0 && content.includes(' ')) { // First column, HEAT
-                            content = content.replace(' ', '<br>');
-                        } else if (colIndex === 1 && content.includes('-')) { // Second column, Time
-                            content = content.replace('-', '<br>');
-                        }
-                        
-                        td.innerHTML = content;
-                        tr.appendChild(td);
-                    });
-                    tbody.appendChild(tr);
-                }
+                row.forEach((cell, idx) => {
+                    const td = document.createElement('td'); td.className=`px-2 py-4 text-sm text-center ${isHl?'text-white':'text-gray-300'} break-words`;
+                    let txt = cell || '';
+                    if(idx===0) txt = txt.replace(' ', '<br>');
+                    if(idx===1) txt = txt.replace('-', '<br>');
+                    td.innerHTML = txt; tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
             }
-            table.append(thead, tbody);
-            tableContainer.appendChild(table);
+            table.append(thead, tbody); tableContainer.appendChild(table);
         }
 
+        // 5. Standard (Event 1)
         function renderStandardTable(data) {
             tableContainer.innerHTML = '';
-            const table = document.createElement('table');
-            table.className = "min-w-full divide-y divide-gray-700";
-            
-            const thead = document.createElement('thead');
-            thead.className = "bg-gray-800";
-            const headerRow = document.createElement('tr');
-             if (!data || data.length === 0 || data[0].length === 0) {
-                displayError('점수판 데이터가 비어있습니다. 시트 범위를 확인하세요.');
-                return;
-            }
-            data[0].forEach(headerText => {
-                const th = document.createElement('th');
-                th.scope = "col";
-                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
-                th.textContent = headerText;
-                headerRow.appendChild(th);
+            const table = document.createElement('table'); table.className = "min-w-full divide-y divide-gray-700";
+            const thead = document.createElement('thead'); thead.className="bg-gray-800";
+            const hRow = document.createElement('tr');
+            if(!data || !data.length) return;
+            data[0].forEach(h => {
+                const th = document.createElement('th'); th.className="py-3.5 px-4 text-center text-sm font-semibold text-white"; th.textContent=h; hRow.appendChild(th);
             });
-            thead.appendChild(headerRow);
+            thead.appendChild(hRow);
 
-            const tbody = document.createElement('tbody');
-            tbody.className = "divide-y divide-gray-800";
-            for (let i = 1; i < data.length; i++) {
-                const rowData = data[i];
-                if (rowData.some(cell => cell && cell.trim() !== '')) { 
-                    const tr = document.createElement('tr');
-                    const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                    tr.className = `${bgColor} hover:bg-white/10`;
-                    const rank = rowData[0] ? String(rowData[0]).trim() : '';
-                    rowData.forEach((cellText, colIndex) => {
-                        const td = document.createElement('td');
-                        td.className = "whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
-                        
-                        let content = cellText || '';
-                        let innerHtml = content;
-
-                        if (colIndex === 1) { // 2열: 팀 이름/데이터
-                            const teamName = cellText ? String(cellText).trim() : '';
-                            
-                            // 1. 랭크 이모지 추가 (앞에 유지)
-                            if (rank === '1') innerHtml = `🥇 ${content}`;
-                            else if (rank === '2') innerHtml = `🥈 ${content}`;
-                            else if (rank === '3') innerHtml = `🥉 ${content}`;
-                            
-                            // 2. 팀 이미지 삽입 (뒤에 붙이기)
-                            const teamImageHtml = getTeamImageHtml(teamName);
-                            innerHtml = innerHtml + teamImageHtml;
-                            
-                            td.innerHTML = innerHtml;
-                        } else {
-                            td.textContent = content;
-                        }
-                        tr.appendChild(td);
-                    });
-                    tbody.appendChild(tr);
-                }
-            }
-            table.append(thead, tbody);
-            tableContainer.appendChild(table);
-        }
-
-        function renderExpandableTable(data, visibleCols) {
-            
-            // 💡 괄호 줄 넘김 처리를 위한 헬퍼 함수
-            const processContent = (text) => {
-                const content = String(text);
-                const openBracketIndex = content.indexOf('(');
+            const tbody = document.createElement('tbody'); tbody.className="divide-y divide-gray-800";
+            for(let i=1; i<data.length; i++){
+                const row = data[i]; if(!row.some(c=>c&&c.trim())) continue;
+                const tr = document.createElement('tr'); tr.className=`${(i%2===0)?'bg-white/5':'bg-transparent'} hover:bg-white/10`;
+                const rank = row[0]?String(row[0]).trim():'';
                 
-                if (openBracketIndex !== -1) {
-                    const outside = content.substring(0, openBracketIndex).trim(); 
-                    const inside = content.substring(openBracketIndex); 
-                    
-                    // 괄호 앞뒤에 띄어쓰기를 넣어 줄 넘김 기회를 만들고, break-words로 강제 줄바꿈 허용
-                    return `${outside} <span class="whitespace-normal break-words">${inside}</span>`;
-                }
-                return content;
-            };
-            
-            // 💡 '+' 기호를 기준으로 줄 넘김 처리하는 헬퍼 함수
-            const processWodName = (text) => {
-                return String(text).replace(/\s\+\s/g, '<br>+ ');
-            };
-            
-            // 💡 Total 탭을 위한 랭크 이모지 헬퍼 함수
-            const getRankEmojiTotal = (rank) => {
-                const r = String(rank).trim();
-                if (r === '1') return '🥇 ';
-                if (r === '2') return '🥈 ';
-                if (r === '3') return '🥉 ';
-                return '';
-            };
-
-
-            tableContainer.innerHTML = '';
-            const table = document.createElement('table');
-            table.className = "min-w-full divide-y divide-gray-700";
-            
-            const thead = document.createElement('thead');
-            thead.className = "bg-gray-800";
-            const headerRow = document.createElement('tr');
-            
-            if (!data || data.length === 0 || data[0].length === 0) {
-                displayError('점수판 데이터가 비어있습니다. 시트 범위를 확인하세요.');
-                return;
-            }
-            const allHeaders = data[0];
-            const visibleHeaders = allHeaders.slice(0, visibleCols);
-            const hiddenHeaders = allHeaders.slice(visibleCols);
-
-            visibleHeaders.forEach(headerText => {
-                const th = document.createElement('th');
-                th.scope = "col";
-                th.className = "py-3.5 px-4 text-center text-sm font-semibold text-white";
-                
-                let content = headerText;
-                
-                // 💡 헤더에 팀 이미지 삽입 (Event 2, 3, 4)
-                if (currentEvent === 'event2' || currentEvent === 'event3' || currentEvent === 'event4') {
-                    const teamImageHtml = getTeamImageHtml(headerText);
-                    if (teamImageHtml) {
-                        // 헤더 텍스트 뒤에 이미지 삽입
-                        content = `${headerText} ${teamImageHtml}`;
-                        th.innerHTML = content;
-                    } else {
-                        th.textContent = headerText;
-                    }
-                } else {
-                    th.textContent = headerText;
-                }
-
-                headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-
-            const tbody = document.createElement('tbody');
-            tbody.className = "divide-y divide-gray-800";
-            
-            for (let i = 1; i < data.length; i++) {
-                const fullRowData = data[i];
-                if (!fullRowData || !fullRowData.some(cell => cell && cell.trim() !== '')) continue;
-
-                const visibleData = fullRowData.slice(0, visibleCols);
-                const hiddenData = fullRowData.slice(visibleCols);
-                
-                const rank = visibleData[0] ? String(visibleData[0]).trim() : '';
-
-                const mainRow = document.createElement('tr');
-                const bgColor = (i % 2 === 0) ? 'bg-white/5' : 'bg-transparent';
-                mainRow.className = `${bgColor} cursor-pointer hover:bg-white/10 transition-colors duration-200`;
-                
-                visibleData.forEach((cellText, colIndex) => {
-                    const td = document.createElement('td');
-                    let tdClasses = "px-4 py-4 text-sm text-center text-gray-300"; 
-                    let content = cellText || '';
-                    let innerHtml = '';
-                    
-                    if (currentEvent === 'total') {
-                        // Total 탭 처리: 랭크(0열), 팀 이름(1열)
-                        if (colIndex === 1) {
-                            const teamName = cellText ? String(cellText).trim() : '';
-
-                            // 1. 랭크 이모지 추가 (앞에 유지)
-                            innerHtml = getRankEmojiTotal(rank) + content;
-                            
-                            // 2. 팀 이미지 삽입 (뒤에 붙이기)
-                            const teamImageHtml = getTeamImageHtml(teamName);
-                            innerHtml = innerHtml + teamImageHtml;
-
-                            td.innerHTML = innerHtml;
-                            tdClasses += " whitespace-nowrap"; 
-                        } else {
-                            td.textContent = content;
-                            tdClasses += " whitespace-nowrap";
-                        }
-
-                    } else if (currentEvent === 'event2') {
-                        // Event 2 탭 처리 (1열: 동작, 2, 3, 4열: 기록)
-                        if (colIndex === 0) { 
-                            // 0열 (동작 이름) - 줄 넘김 허용, '+' 기준 줄 넘김 적용
-                            innerHtml = processWodName(content); 
-                            tdClasses += " whitespace-normal"; // 줄 넘김 허용
-                        } else { 
-                            // 1열, 2열, 3열 (기록) - 줄 넘김 허용, 괄호 줄 넘김 적용
-                            innerHtml = processContent(content); 
-                            tdClasses += " whitespace-normal break-words"; // 줄 넘김 허용 및 긴 단어 강제 줄바꿈
-                        }
-                        td.innerHTML = innerHtml || content;
-                        
-                    } else {
-                        // Event 3/4 등 기타 expandable table
-                        td.textContent = content;
-                        tdClasses += " whitespace-nowrap";
-                    }
-
-                    td.className = tdClasses;
-                    mainRow.appendChild(td);
+                row.forEach((cell, idx) => {
+                    const td = document.createElement('td'); td.className="whitespace-nowrap px-4 py-4 text-sm text-center text-gray-300";
+                    let content = cell||'';
+                    if(idx===1) {
+                        if(rank=='1') content = '🥇 '+content;
+                        else if(rank=='2') content = '🥈 '+content;
+                        else if(rank=='3') content = '🥉 '+content;
+                        content += getTeamImageHtml(cell);
+                        td.innerHTML = content;
+                    } else td.textContent = content;
+                    tr.appendChild(td);
                 });
-
-                const detailsRow = document.createElement('tr');
-                detailsRow.className = "hidden details-row";
-                const detailsCell = document.createElement('td');
-                detailsCell.colSpan = visibleCols;
-                detailsCell.className = "p-0";
-                
-                const detailsContainer = document.createElement('div');
-                detailsContainer.className = "bg-gray-800 p-4";
-                
-                // 숨겨진 열의 개수에 맞게 레이아웃 조정
-                const numHiddenCols = hiddenData.length;
-                let gridClass = 'grid-cols-1';
-                if (numHiddenCols >= 4) gridClass = 'lg:grid-cols-4';
-                else if (numHiddenCols === 3) gridClass = 'lg:grid-cols-3';
-                else if (numHiddenCols === 2) gridClass = 'sm:grid-cols-2';
-                
-                let detailsHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-x-8 gap-y-2 text-sm">`;
-
-                for (let j = 0; j < hiddenData.length; j++) {
-                    let detailContent = hiddenData[j] || 'N/A';
-                    
-                    // Event 2나 Total에서 숨겨진 기록 열에만 괄호 줄 넘김 적용
-                    if (currentEvent === 'event2' || currentEvent === 'total') {
-                        detailContent = processContent(detailContent);
-                    }
-
-                    detailsHTML += `<div><span class="font-semibold text-gray-400">${hiddenHeaders[j] || 'N/A'}:</span> <span class="text-white">${detailContent}</span></div>`;
-                }
-                detailsHTML += '</div>';
-
-                detailsContainer.innerHTML = detailsHTML;
-                detailsCell.appendChild(detailsContainer);
-                detailsRow.appendChild(detailsCell);
-                
-                tbody.appendChild(mainRow);
-                tbody.appendChild(detailsRow);
-
-                mainRow.addEventListener('click', () => {
-                    const wasHidden = detailsRow.classList.contains('hidden');
-                    tbody.querySelectorAll('.details-row').forEach(row => {
-                        row.classList.add('hidden');
-                    });
-                    if(wasHidden) {
-                       detailsRow.classList.remove('hidden');
-                    }
-                });
+                tbody.appendChild(tr);
             }
-            table.append(thead, tbody);
-            tableContainer.appendChild(table);
+            table.append(thead, tbody); tableContainer.appendChild(table);
         }
 
-        function showLoading() {
-            statusDiv.innerHTML = '<div class="flex items-center gap-2"><div class="loader"></div><span>데이터를 갱신하는 중...</span></div>';
-        }
-        function updateStatus(message) { statusDiv.innerHTML = `<span>${message}</span>`; }
-        function displayError(message) {
-            statusDiv.innerHTML = `<span class="text-red-400 font-semibold">${message}</span>`;
-            wodSection.style.display = 'none'; // 에러 발생 시 WOD 섹션 숨김
-            tableContainer.innerHTML = `<div class="text-center p-10 bg-gray-800 rounded-lg"><p class="text-gray-400">${message}</p></div>`;
-        }
-        function displayAnnouncement(message) {
-            tableContainer.innerHTML = `<div class="text-center p-10 bg-gray-800 rounded-lg"><p class="text-2xl font-bold text-white">${message}</p></div>`;
-            wodSection.style.display = 'none';
-            updateStatus('');
-        }
+        function showLoading() { statusDiv.innerHTML = '<div class="loader mx-auto"></div>'; }
+        function updateStatus(msg) { statusDiv.innerHTML = msg; }
+        function displayError(msg) { statusDiv.innerHTML = `<span class="text-red-400">${msg}</span>`; wodSection.style.display='none'; }
+        function displayAnnouncement(msg) { tableContainer.innerHTML = `<div class="p-10 text-center text-2xl text-white font-bold">${msg}</div>`; wodSection.style.display='none'; }
     </script>
 </body>
 </html>
